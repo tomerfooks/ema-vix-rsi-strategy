@@ -1,0 +1,86 @@
+//@version=6
+strategy("VIX Adjusted EMA 6/20 Crossover Strategy", 
+         overlay=true, 
+         initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity,
+         default_qty_value=100,
+         commission_type=strategy.commission.percent,
+         commission_value=0.1)
+
+// Input parameters - Low Volatility
+fastLengthLow = input.int(5, "Fast EMA (Low VIX)", minval=1, group="Low Volatility")
+slowLengthLow = input.int(19, "Slow EMA (Low VIX)", minval=1, group="Low Volatility")
+
+// Input parameters - Medium Volatility
+fastLengthMed = input.int(6, "Fast EMA (Medium VIX)", minval=1, group="Medium Volatility")
+slowLengthMed = input.int(20, "Slow EMA (Medium VIX)", minval=1, group="Medium Volatility")
+
+// Input parameters - High Volatility
+fastLengthHigh = input.int(7, "Fast EMA (High VIX)", minval=1, group="High Volatility")
+slowLengthHigh = input.int(21, "Slow EMA (High VIX)", minval=1, group="High Volatility")
+
+// VIX Settings
+vixThresholdLow = input.float(15.0, "Low/Medium VIX Threshold", minval=0, step=0.5, group="VIX Settings")
+vixThresholdHigh = input.float(25.0, "Medium/High VIX Threshold", minval=0, step=0.5, group="VIX Settings")
+vixSymbol = input.string("VIX", "VIX Symbol", group="VIX Settings")
+
+// Get VIX data
+vixValue = request.security(vixSymbol, timeframe.period, close)
+
+// Determine VIX regime
+lowVix = vixValue < vixThresholdLow
+medVix = vixValue >= vixThresholdLow and vixValue < vixThresholdHigh
+highVix = vixValue >= vixThresholdHigh
+
+// Calculate all EMAs (Pine Script requires fixed lengths)
+fastEMA_low = ta.ema(close, fastLengthLow)
+slowEMA_low = ta.ema(close, slowLengthLow)
+fastEMA_med = ta.ema(close, fastLengthMed)
+slowEMA_med = ta.ema(close, slowLengthMed)
+fastEMA_high = ta.ema(close, fastLengthHigh)
+slowEMA_high = ta.ema(close, slowLengthHigh)
+
+// Select which EMAs to use based on VIX regime
+fastEMA = lowVix ? fastEMA_low : medVix ? fastEMA_med : fastEMA_high
+slowEMA = lowVix ? slowEMA_low : medVix ? slowEMA_med : slowEMA_high
+
+// Plot EMAs
+plot(fastEMA, "Fast EMA (6)", color=color.new(color.green, 0), linewidth=2)
+plot(slowEMA, "Slow EMA (20)", color=color.new(color.red, 0), linewidth=2)
+
+// Detect crossovers
+bullishCross = ta.crossover(fastEMA, slowEMA)
+bearishCross = ta.crossunder(fastEMA, slowEMA)
+
+// Strategy logic
+if bullishCross
+    strategy.entry("Long", strategy.long)
+    
+if bearishCross
+    strategy.close("Long")
+
+// Visual signals
+plotshape(bullishCross, "Buy Signal", shape.triangleup, location.belowbar, 
+          color.new(color.green, 0), size=size.small)
+plotshape(bearishCross, "Sell Signal", shape.triangledown, location.abovebar, 
+          color.new(color.red, 0), size=size.small)
+
+// Background color for position and VIX regime
+positionBg = strategy.position_size > 0 ? color.new(color.green, 90) : na
+vixBg = lowVix ? color.new(color.blue, 95) : medVix ? color.new(color.yellow, 95) : color.new(color.orange, 95)
+bgcolor(positionBg)
+bgcolor(vixBg, title="VIX Regime Background")
+
+// Info label
+var label infoLabel = na
+if bar_index == last_bar_index - 1
+    label.delete(infoLabel)
+    vixText = "VIX: " + str.tostring(vixValue, "#.##")
+    currentFast = lowVix ? fastLengthLow : medVix ? fastLengthMed : fastLengthHigh
+    currentSlow = lowVix ? slowLengthLow : medVix ? slowLengthMed : slowLengthHigh
+    regimeText = lowVix ? " (LOW - Using " + str.tostring(currentFast) + "/" + str.tostring(currentSlow) + ")" : medVix ? " (MEDIUM - Using " + str.tostring(currentFast) + "/" + str.tostring(currentSlow) + ")" : " (HIGH - Using " + str.tostring(currentFast) + "/" + str.tostring(currentSlow) + ")"
+    labelColor = lowVix ? color.new(color.blue, 20) : medVix ? color.new(color.yellow, 20) : color.new(color.orange, 20)
+    infoLabel := label.new(bar_index, high, vixText + regimeText, 
+                           style=label.style_label_down, 
+                           color=labelColor,
+                           textcolor=medVix ? color.black : color.white)
