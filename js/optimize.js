@@ -1,7 +1,26 @@
 const { calculateBuyAndHold } = require('./backtest');
 const { fetchData } = require('./dataFetcher');
-const { DEFAULT_PARAMS, OPTIMIZATION_CONFIG } = require('./config');
 const { EMA, ATR } = require('technicalindicators');
+const { Worker } = require('worker_threads');
+const os = require('os');
+
+// Dynamic config loading based on interval
+let DEFAULT_PARAMS;
+let OPTIMIZATION_CONFIG;
+
+function loadConfig(interval = '1h') {
+  const configFile = `./config-${interval}`;
+  try {
+    const config = require(configFile);
+    DEFAULT_PARAMS = config.DEFAULT_PARAMS;
+    OPTIMIZATION_CONFIG = { ...config.OPTIMIZATION_CONFIG, interval }; // Override interval in config
+    return true;
+  } catch (error) {
+    console.error(`❌ Error loading config file: ${configFile}.js`);
+    console.error(`   Available configs: config-1h.js, config-1d.js, config-4h.js`);
+    return false;
+  }
+}
 
 /**
  * Generate parameter ranges based on ±X% of default values (from config)
@@ -102,16 +121,16 @@ function generateRangeFloat(value, percent, min = 0, max = 100) {
  */
 function* generateParameterCombinations(options = {}) {
   const ranges = options.useSmartRanges ? generateSmartRanges() : {
-    fastLengthLow: options.fastEmaRange || [5, 10, 14, 20, 25, 30, 35, 40, 43, 50, 60, 70, 80],
-    slowLengthLow: options.slowEmaRange || [20, 30, 40, 50, 60, 70, 80, 90, 98, 100, 120, 140, 160, 180, 200],
-    fastLengthMed: options.fastEmaRange || [5, 10, 14, 20, 25, 30, 35, 40, 43, 50, 60, 70, 80],
-    slowLengthMed: options.slowEmaRange || [20, 30, 40, 50, 60, 70, 80, 90, 98, 100, 120, 140, 160, 180, 200],
-    fastLengthHigh: options.fastEmaRange || [5, 10, 14, 20, 25, 30, 35, 40, 43, 50, 60, 70, 80],
-    slowLengthHigh: options.slowEmaRange || [20, 30, 40, 50, 60, 70, 80, 90, 98, 100, 120, 140, 160, 180, 200],
-    atrLength: options.atrLengthRange || [10, 14, 16, 20, 25, 30],
-    volatilityLength: options.volatilityLengthRange || [50, 60, 71, 80, 100, 120],
-    lowVolPercentile: options.lowVolPercentileRange || [20, 25, 28, 30, 33],
-    highVolPercentile: options.highVolPercentileRange || [60, 65, 66, 70, 75]
+    fastLengthLow: options.fastEmaRange,
+    slowLengthLow: options.slowEmaRange,
+    fastLengthMed: options.fastEmaRange,
+    slowLengthMed: options.slowEmaRange ,
+    fastLengthHigh: options.fastEmaRange,
+    slowLengthHigh: options.slowEmaRange,
+    atrLength: options.atrLengthRange,
+    volatilityLength: options.volatilityLengthRange,
+    lowVolPercentile: options.lowVolPercentileRange,
+    highVolPercentile: options.highVolPercentileRange
   };
 
   const total = ranges.fastLengthLow.length * ranges.slowLengthLow.length *
@@ -414,7 +433,144 @@ function runStrategyOptimized(candles, emaCache, volMetricsCache, params) {
 }
 
 /**
- * Optimize parameters for a single ticker
+ * Run parameter combinations in parallel using worker threads
+ */
+async function runParallelOptimization(candles, emaCache, volMetricsCache, paramGenerator) {
+  const numWorkers = OPTIMIZATION_CONFIG.numWorkers || os.cpus().length;
+  const batchSize = OPTIMIZATION_CONFIG.batchSize || 5000;
+  
+  console.log(`   Using ${numWorkers} worker threads (${os.cpus().length} cores available)`);
+  console.log(`   Batch size: ${batchSize} parameters per worker\n`);
+  
+  let bestResult = null;
+  let bestParams = null;
+  let testedCount = 0;
+  let validCount = 0;
+  let skippedCount = 0;
+  
+  const startTime = Date.now();
+  let lastProgressUpdate = Date.now();
+  const progressInterval = OPTIMIZATION_CONFIG.progressUpdateInterval;
+  
+  // Collect parameters into batches
+  let currentBatch = [];
+  const batches = [];
+  
+  for (const params of paramGenerator) {
+    currentBatch.push(params);
+    if (currentBatch.length >= batchSize) {
+      batches.push(currentBatch);
+      currentBatch = [];
+    }
+  }
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch);
+  }
+  
+  console.log(`   Total batches: ${batches.length} (${batches.reduce((sum, b) => sum + b.length, 0)} parameter combinations)\n`);
+  
+  // Create worker pool - keep workers alive for reuse
+  const workers = [];
+  const workerPromises = [];
+  
+  for (let i = 0; i < numWorkers; i++) {
+    const worker = new Worker('./optimizeWorker.js', {
+      workerData: {
+        candles,
+        emaCache,
+        volMetricsCache
+      }
+    });
+    worker.setMaxListeners(0); // Unlimited listeners since we reuse workers
+    workers.push(worker);
+  }
+  
+  // Distribute batches to workers
+  let batchIndex = 0;
+  
+  const processNextBatch = (workerIndex) => {
+    if (batchIndex >= batches.length) {
+      return Promise.resolve(null);
+    }
+    
+    const batch = batches[batchIndex++];
+    const worker = workers[workerIndex];
+    
+    return new Promise((resolve, reject) => {
+      const messageHandler = (data) => {
+        worker.off('message', messageHandler);
+        worker.off('error', errorHandler);
+        
+        // Process results
+        for (const { params, result, skipped } of data.results) {
+          testedCount++;
+          
+          if (skipped || !result) {
+            skippedCount++;
+            continue;
+          }
+          
+          validCount++;
+          
+          if (!bestResult || result.score > bestResult.score) {
+            bestResult = result;
+            bestParams = params;
+          }
+        }
+        
+        // Progress update
+        if (Date.now() - lastProgressUpdate > progressInterval) {
+          const elapsed = (Date.now() - startTime) / 1000;
+          const rate = testedCount / elapsed;
+          console.log(`   Progress: ${testedCount.toLocaleString()} tested, ${validCount.toLocaleString()} valid, ${skippedCount.toLocaleString()} filtered | Best: ${bestResult ? bestResult.totalReturn.toFixed(2) + '%' : 'N/A'} | ${rate.toFixed(0)}/sec`);
+          lastProgressUpdate = Date.now();
+        }
+        
+        // Process next batch with this worker
+        resolve(processNextBatch(workerIndex));
+      };
+      
+      const errorHandler = (err) => {
+        worker.off('message', messageHandler);
+        worker.off('error', errorHandler);
+        reject(err);
+      };
+      
+      worker.once('message', messageHandler);
+      worker.once('error', errorHandler);
+      
+      // Send batch to worker
+      worker.postMessage({ paramBatch: batch });
+    });
+  };
+  
+  // Start all workers processing batches
+  for (let i = 0; i < numWorkers; i++) {
+    workerPromises.push(processNextBatch(i));
+  }
+  
+  // Wait for all workers to finish
+  await Promise.all(workerPromises);
+  
+  // Terminate workers
+  for (const worker of workers) {
+    await worker.terminate();
+  }
+  
+  const elapsed = (Date.now() - startTime) / 1000;
+  
+  return {
+    bestResult,
+    bestParams,
+    testedCount,
+    validCount,
+    skippedCount,
+    elapsed
+  };
+}
+
+/**
+ * Optimize parameters for a single ticker (with parallel processing)
  */
 async function optimizeTicker(ticker, candles, searchType = 'smart') {
   console.log(`\n${'='.repeat(60)}`);
@@ -442,66 +598,17 @@ async function optimizeTicker(ticker, candles, searchType = 'smart') {
   const volMetricsCache = {};
   const emaTime = (Date.now() - emaStartTime) / 1000;
   console.log(`   ✓ Cached ${allEmaLengths.size} EMA lengths in ${emaTime.toFixed(2)}s`);
-  console.log('\n🚀 Starting optimization...\n');
+  console.log('\n🚀 Starting parallel optimization...\n');
 
-  let bestResult = null;
-  let bestParams = null;
-  let testedCount = 0;
-  let validCount = 0;
-  let skippedCount = 0;
-  const startTime = Date.now();
-  let firstTestTime = null;
-
-  let lastProgressUpdate = Date.now();
-  const progressInterval = OPTIMIZATION_CONFIG.progressUpdateInterval;
-
-  for (const params of generator) {
-    testedCount++;
-
-    try {
-      const result = runStrategyOptimized(candles, emaCache, volMetricsCache, params);
-      
-      // Early termination filters (relaxed for 300 candles)
-      if (!isFinite(result.totalReturn) || 
-          result.totalTrades < 2 ||  // Reduced from 5 to 2 for shorter timeframe
-          result.maxDrawdown > 50 ||
-          result.earlyReturn < -20) {  // Relaxed from -10 to -20
-        skippedCount++;
-        continue;
-      }
-
-      validCount++;
-
-      const sharpeRatio = calculateSharpeRatio(result.equityCurve);
-      const calmarRatio = result.maxDrawdown > 0 ? 
-        result.totalReturn / result.maxDrawdown : 0;
-
-      const scoredResult = {
-        ...result,
-        sharpeRatio,
-        calmarRatio,
-        score: calculateScore(result, sharpeRatio, calmarRatio)
-      };
-
-      if (!bestResult || scoredResult.score > bestResult.score) {
-        bestResult = scoredResult;
-        bestParams = params;
-      }
-
-      if (Date.now() - lastProgressUpdate > progressInterval) {
-        const elapsed = (Date.now() - startTime) / 1000;
-        const rate = testedCount / elapsed;
-        console.log(`   Progress: ${testedCount.toLocaleString()} tested, ${validCount.toLocaleString()} valid, ${skippedCount.toLocaleString()} filtered | Best: ${bestResult.totalReturn.toFixed(2)}% | ${rate.toFixed(0)}/sec`);
-        lastProgressUpdate = Date.now();
-      }
-
-    } catch (error) {
-      skippedCount++;
-      continue;
-    }
-  }
-
-  const elapsed = (Date.now() - startTime) / 1000;
+  // Run optimization in parallel
+  const optimizationResult = await runParallelOptimization(
+    candles,
+    emaCache,
+    volMetricsCache,
+    generator
+  );
+  
+  const { bestResult, bestParams, testedCount, validCount, skippedCount, elapsed } = optimizationResult;
   
   console.log(`\n✅ Optimization Complete`);
   console.log(`   Tested: ${testedCount.toLocaleString()} combinations`);
@@ -634,19 +741,20 @@ function calculateScore(result, sharpeRatio, calmarRatio) {
 /**
  * Run optimization for multiple tickers
  */
-async function optimizeMultipleTickers(tickers, searchType = 'smart') {
+async function optimizeMultipleTickers(tickers, searchType = 'smart', interval = '1h') {
   const results = [];
   
   console.log(`\n${'='.repeat(60)}`);
   console.log(`🚀 Starting Multi-Ticker Optimization`);
   console.log(`   Tickers: ${tickers.join(', ')}`);
+  console.log(`   Interval: ${interval.toUpperCase()}`);
   console.log(`   Search Type: ${searchType.toUpperCase()}`);
   console.log(`   Optimizations: ±${OPTIMIZATION_CONFIG.rangePercent * 100}% ranges, EMA caching, ATR caching, early termination`);
   console.log('='.repeat(60));
 
   for (const ticker of tickers) {
     console.log(`\n📥 Fetching data for ${ticker.toUpperCase()}...`);
-    const candles = await fetchData(ticker, OPTIMIZATION_CONFIG.candles, OPTIMIZATION_CONFIG.interval);
+    const candles = await fetchData(ticker, OPTIMIZATION_CONFIG.candles, interval);
     
     if (!candles || candles.length < 200) {
       console.log(`❌ Insufficient data for ${ticker}`);
@@ -670,19 +778,55 @@ async function optimizeMultipleTickers(tickers, searchType = 'smart') {
 // Main execution
 if (require.main === module) {
   const args = process.argv.slice(2);
-  const searchType = args.includes('--full') ? 'full' : 'smart';
-  const tickers = args.filter(arg => !arg.startsWith('--'));
   
-  // Use config symbols if no command line args provided
-  const tickersToOptimize = tickers.length > 0 ? tickers : OPTIMIZATION_CONFIG.symbols;
+  // Parse arguments
+  let ticker = null;
+  let interval = '1h';
+  let searchType = 'smart';
+  
+  // Filter out flags first
+  const nonFlagArgs = args.filter(arg => !arg.startsWith('--'));
+  
+  // Check for --full flag
+  if (args.includes('--full')) {
+    searchType = 'full';
+  }
+  
+  // Parse positional arguments
+  if (nonFlagArgs.length > 0) {
+    ticker = nonFlagArgs[0];
+  }
+  if (nonFlagArgs.length > 1) {
+    interval = nonFlagArgs[1];
+  }
+  
+  // Validate and normalize interval
+  const validIntervals = ['1h', '4h', '1d'];
+  if (!validIntervals.includes(interval)) {
+    console.error(`\n❌ Invalid interval: ${interval}`);
+    console.error(`   Valid intervals: ${validIntervals.join(', ')}\n`);
+    process.exit(1);
+  }
+  
+  // Load config for the specified interval
+  if (!loadConfig(interval)) {
+    process.exit(1);
+  }
+  
+  // Determine which tickers to optimize
+  const tickersToOptimize = ticker ? [ticker] : OPTIMIZATION_CONFIG.symbols;
   
   console.log(`\n🎯 Parameter Optimization System v2.0`);
   console.log(`   Mode: ${searchType === 'full' ? 'FULL (comprehensive)' : 'SMART (±' + (OPTIMIZATION_CONFIG.rangePercent * 100) + '% from defaults)'}`);  
   console.log(`   Tickers: ${tickersToOptimize.join(', ')}`);
-  console.log(`   Candles: ${OPTIMIZATION_CONFIG.candles} (${OPTIMIZATION_CONFIG.interval} interval)`);
+  console.log(`   Interval: ${interval.toUpperCase()}`);
+  console.log(`   Candles: ${OPTIMIZATION_CONFIG.candles} (${interval} interval)`);
   console.log(`   Features: EMA caching, ATR caching, early termination`);
   console.log(`   Use --full flag for comprehensive search`);
-  console.log(`   Example: node optimize.js QQQ SPY\n`);  optimizeMultipleTickers(tickersToOptimize, searchType)
+  console.log(`   Example: node optimize.js QQQ 1d`);
+  console.log(`   Example: node optimize.js SPY 1h --full\n`);
+  
+  optimizeMultipleTickers(tickersToOptimize, searchType, interval)
     .then(() => {
       console.log('\n✅ Optimization complete!\n');
       process.exit(0);

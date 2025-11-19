@@ -1,5 +1,6 @@
 const { EMA, ATR } = require('technicalindicators');
-const { DEFAULT_PARAMS } = require('./config');
+const { DEFAULT_PARAMS } = require('./config-1h');
+const { fetchData } = require('./dataFetcher');
 
 /**
  * Calculate EMA using technicalindicators library

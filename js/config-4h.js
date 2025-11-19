@@ -1,22 +1,22 @@
-// Strategy default parameters from strategy-1h.pine
+// Strategy default parameters for 4-hour interval
 const DEFAULT_PARAMS = {
   // Low Volatility
-  fastLengthLow: 14,
-  slowLengthLow: 80,
+  fastLengthLow: 10,
+  slowLengthLow: 60,
   
   // Medium Volatility
-  fastLengthMed: 25,
-  slowLengthMed: 98,
+  fastLengthMed: 18,
+  slowLengthMed: 75,
   
   // High Volatility
-  fastLengthHigh: 43,
-  slowLengthHigh: 120,
+  fastLengthHigh: 30,
+  slowLengthHigh: 90,
   
   // Volatility Settings
-  volatilityLength: 71,
-  atrLength: 16,
+  volatilityLength: 60,
+  atrLength: 14,
   lowVolPercentile: 28,
-  highVolPercentile: 66,
+  highVolPercentile: 68,
   
   // Backtest settings
   initialCapital: 10000
@@ -26,19 +26,23 @@ const DEFAULT_PARAMS = {
 const OPTIMIZATION_CONFIG = {
   // Data settings
   symbols: ['QQQ'],           // Symbols to optimize (can be array)
-  candles: 2000,              // Number of candles to fetch
-  interval: '1h',             // Candle interval: '1h', '4h', '1d'
+  candles: 600,              // Number of candles to fetch
+  interval: '4h',             // Candle interval: '1h', '4h', '1d'
+  
+  // Worker thread settings
+  numWorkers: null,           // null = use all CPU cores, or specify number (e.g., 4, 8)
+  batchSize: 5000,            // Number of parameter combinations per worker batch (larger = less overhead)
   
   // Parameter ranges - control each parameter individually
   // Options: null = use rangePercent, number = use as percentage, [min, max] = explicit range
   paramRanges: {
-    fastLengthLow: 0.03,      // 0.03 = ±3% from default (14) = [13, 14, 15]
-    slowLengthLow: 0.03,      // 0.03 = ±3% from default (80) = [77, 78, ..., 83]
+    fastLengthLow: 0.03,      // 0.03 = ±3% from default
+    slowLengthLow: 0.02,      // 0.03 = ±3% from default
     fastLengthMed: 0.03,      // Or: [20, 30] to test all integers 20-30
-    slowLengthMed: 0.03,      // Or: null to use rangePercent
-    fastLengthHigh: 0.03,
-    slowLengthHigh: 0.03,
-    atrLength: 0.02,          // 0.01 = ±1% from default (16) = [16, 17]
+    slowLengthMed: 0.02,      // Or: null to use rangePercent
+    fastLengthHigh: 0.04,
+    slowLengthHigh: 0.02,
+    atrLength: 0.03,          // 0.01 = ±1% from default
     volatilityLength: 0.02,
     lowVolPercentile: 0.02,
     highVolPercentile: 0.02
