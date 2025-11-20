@@ -29,7 +29,7 @@ DEFAULT_PARAMS = {
 # Optimization Configuration
 OPTIMIZATION_CONFIG = {
     'symbols': ['QQQ'],
-    'candles': 500,
+    'candles': 270,
     'interval': '4h',
     'num_workers': None,
     'batch_size': 5000,

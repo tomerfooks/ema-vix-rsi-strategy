@@ -26,7 +26,7 @@ const DEFAULT_PARAMS = {
 const OPTIMIZATION_CONFIG = {
   // Data settings
   symbols: ['QQQ'],           // Symbols to optimize (can be array)
-  candles: 500,              // Number of candles to fetch
+  candles: 150,               // Number of candles to fetch
   interval: '1d',             // Candle interval: '1h', '4h', '1d'
   
   // Worker thread settings

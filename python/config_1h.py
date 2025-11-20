@@ -31,7 +31,7 @@ DEFAULT_PARAMS = {
 OPTIMIZATION_CONFIG = {
     # Data settings
     'symbols': ['QQQ'],           # Symbols to optimize (can be list)
-    'candles': 1500,              # Number of candles to fetch
+    'candles': 300,               # Number of candles to fetch
     'interval': '1h',             # Candle interval: '1h', '4h', '1d'
     
     # Multiprocessing settings

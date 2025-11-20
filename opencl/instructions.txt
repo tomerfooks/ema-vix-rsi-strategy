@@ -1,0 +1,66 @@
+How to test and optimize a given symbol-interval-strategy
+
+Step 1:
+./run.sh symbol interval strategy
+#for exampel: ./run.sh qqq 1d adaptive_ema_v1
+
+Step 2: go over resulsts:
+###
+will look like this: 
+   Total combinations: 73728
+
+   Compute Units: 12 | Max Work Group: 256
+   GPU Memory: 4.00 GB
+
+
+✅ Optimization Complete
+   Tested: 73728 combinations
+   Valid: 73728 results
+   Filtered: 0 (early termination)
+   Time: 0.0s (1690001 tests/sec)
+   Avg time per test: 0.001ms
+
+🏆 BEST PARAMETERS FOR QQQ
+
+📊 Performance Metrics:
+   Total Return: 10.05%
+   Max Drawdown: 4.31%
+   Calmar Ratio: 2.34
+   Total Trades: 2
+   Score: 23.35
+
+⚙️  Optimal Parameters:
+   Low Vol:  Fast=8, Slow=18
+   Med Vol:  Fast=6, Slow=21
+   High Vol: Fast=6, Slow=22
+   ATR Length: 13
+   Volatility Lookback: 71
+   Percentiles: Low=20%, High=53%
+
+============================================================
+📈 PERFORMANCE COMPARISON
+============================================================
+   Buy & Hold Return: 35.38%
+   Strategy Outperformance: -25.33%
+
+============================================================
+📋 TRADE LOG (Best Parameters)
+============================================================
+   #1  BUY  @ $565.71 on 2025-07-25 07:00
+   #2  SELL @ $562.63 on 2025-08-21 07:00 | P&L: -0.55%
+   #3  BUY  @ $571.31 on 2025-08-22 07:00
+   #4  SELL @ $569.66 on 2025-08-25 07:00 | P&L: -0.29%
+   #5  BUY  @ $572.83 on 2025-08-27 07:00
+   #6  SELL @ $569.41 on 2025-09-03 07:00 | P&L: -0.60%
+   #7  BUY  @ $574.56 on 2025-09-04 07:00
+   #8  SELL @ $608.40 on 2025-11-13 07:00 | P&L: +5.89%
+   Total trades: 8
+
+###
+
+
+Step 3: tweak/modify base default params, based on recommendation (relevant config file will be located in strategies/strategy/config_1d | #for example: strategies/adaptive_ema_v1/config_1d)
+you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization
+Step 4: Run again
+
+Step 5: repeat the process around 10 times, until optimal results.

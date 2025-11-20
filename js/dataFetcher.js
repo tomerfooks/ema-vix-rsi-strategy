@@ -5,7 +5,7 @@ const yahooFinance = new YahooFinance();
 /**
  * Fetch historical data from Yahoo Finance
  */
-async function fetchData(ticker, targetCandles = 1500, interval = '1h') {
+async function fetchData(ticker, targetCandles = 300, interval = '1h') {
   try {
     // Calculate days needed based on interval (with buffer for weekends/holidays)
     const daysNeeded = interval === '1h' ? 300 : (interval === '4h' ? 500 : 730);

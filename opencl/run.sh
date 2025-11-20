@@ -1,11 +1,11 @@
 #!/bin/bash
 # OpenCL GPU Optimizer - Automated Workflow
-# Usage: ./run.sh <TICKER> <INTERVAL> [CANDLES]
+# Usage: ./run.sh <TICKER> <INTERVAL> [STRATEGY] [CANDLES]
 # Examples:
 #   ./run.sh GOOG 1h
-#   ./run.sh GOOG 1h 1000
-#   ./run.sh QQQ 4h 600
-#   ./run.sh SPY 1d 500
+#   ./run.sh GOOG 1h adaptive_ema_v2
+#   ./run.sh QQQ 1d adaptive_ema_v1
+#   ./run.sh SPY 4h adaptive_ema_v2 600
 
 set -e  # Exit on error
 
@@ -14,39 +14,78 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
-
-# Default values
-DEFAULT_CANDLES=600
 
 # Check arguments
 if [ $# -lt 2 ]; then
     echo -e "${RED}❌ Error: Missing arguments${NC}"
     echo ""
-    echo "Usage: $0 <TICKER> <INTERVAL> [CANDLES]"
+    echo "Usage: $0 <TICKER> <INTERVAL> [STRATEGY] [CANDLES]"
     echo ""
     echo "Arguments:"
     echo "  TICKER    Stock ticker (e.g., GOOG, QQQ, SPY)"
     echo "  INTERVAL  Time interval: 1h, 4h, or 1d"
-    echo "  CANDLES   Number of candles (optional, default: 600)"
+    echo "  STRATEGY  Strategy version (optional, default: adaptive_ema_v1)"
+    echo "            Options: adaptive_ema_v1, adaptive_ema_v2"
+    echo "  CANDLES   Number of candles (optional, defaults: 1h=500, 4h=270, 1d=150)"
     echo ""
     echo "Examples:"
-    echo "  $0 GOOG 1h           # Use default 600 candles"
-    echo "  $0 GOOG 1h 1000      # Use 1000 candles"
-    echo "  $0 QQQ 4h 600"
-    echo "  $0 SPY 1d 500"
+    echo "  $0 GOOG 1h                      # Use v1, default candles"
+    echo "  $0 GOOG 1h adaptive_ema_v2      # Use v2, default candles"
+    echo "  $0 QQQ 1d adaptive_ema_v1       # Use v1, default candles"
+    echo "  $0 SPY 4h adaptive_ema_v2 600   # Use v2, 600 candles"
+    echo ""
+    echo "Strategy Comparison:"
+    echo "  v1: 3 EMA pairs, ATR percentile, simpler"
+    echo "  v2: KAMA + ADX>25 gate + trailing stops, 2× profit factor"
     exit 1
 fi
 
 TICKER=$1
 INTERVAL=$2
-CANDLES=${3:-$DEFAULT_CANDLES}
 
-# Validate interval
+# Check if 3rd argument is a strategy name or a number
+if [ $# -ge 3 ]; then
+    # If it starts with "adaptive_" it's a strategy, otherwise it's candles
+    if [[ "$3" =~ ^adaptive_ ]]; then
+        STRATEGY=$3
+        CANDLES=$4
+    else
+        STRATEGY="adaptive_ema_v1"
+        CANDLES=$3
+    fi
+else
+    STRATEGY="adaptive_ema_v1"
+    CANDLES=""
+fi
+
+# Validate strategy
+if [ ! -d "strategies/$STRATEGY" ]; then
+    echo -e "${RED}❌ Error: Strategy '$STRATEGY' not found${NC}"
+    echo ""
+    echo "Available strategies:"
+    for dir in strategies/adaptive_ema_*; do
+        if [ -d "$dir" ]; then
+            basename "$dir"
+        fi
+    done
+    exit 1
+fi
+
+# Validate interval and set default candles based on timeframe
 case "$INTERVAL" in
-    1h|4h|1d|1H|4H|1D)
-        # Convert to lowercase for consistency
-        INTERVAL=$(echo "$INTERVAL" | tr '[:upper:]' '[:lower:]')
+    1h|1H)
+        INTERVAL="1h"
+        DEFAULT_CANDLES=500
+        ;;
+    4h|4H)
+        INTERVAL="4h"
+        DEFAULT_CANDLES=270
+        ;;
+    1d|1D)
+        INTERVAL="1d"
+        DEFAULT_CANDLES=150
         ;;
     *)
         echo -e "${RED}❌ Error: Invalid interval '$INTERVAL'${NC}"
@@ -55,15 +94,15 @@ case "$INTERVAL" in
         ;;
 esac
 
+CANDLES=${CANDLES:-$DEFAULT_CANDLES}
+
 # Convert ticker to uppercase
 TICKER=$(echo "$TICKER" | tr '[:lower:]' '[:upper:]')
 
-echo -e "${BLUE}════════════════════════════════════════════════════════${NC}"
-echo -e "${BLUE}🚀 OpenCL GPU Optimizer - Automated Workflow${NC}"
-echo -e "${BLUE}════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "  ${GREEN}Ticker:${NC}   $TICKER"
 echo -e "  ${GREEN}Interval:${NC} $INTERVAL"
+echo -e "  ${CYAN}Strategy:${NC} $STRATEGY"
 echo -e "  ${GREEN}Candles:${NC}  $CANDLES"
 echo ""
 
@@ -81,20 +120,16 @@ fi
 
 echo ""
 
-# Step 2: Compile optimizer (if needed)
-echo -e "${YELLOW}🔨 Step 2/3: Checking compilation...${NC}"
+# Step 2: Compile optimizer with selected strategy
+echo -e "${YELLOW}🔨 Step 2/3: Compiling optimizer with $STRATEGY...${NC}"
 echo ""
 
-if [ ! -f "optimize" ] || [ "optimize.c" -nt "optimize" ]; then
-    echo "   Compiling optimizer..."
-    if make; then
-        echo -e "${GREEN}✅ Compilation successful${NC}"
-    else
-        echo -e "${RED}❌ Compilation failed${NC}"
-        exit 1
-    fi
+# Always clean before compiling to ensure config changes are picked up
+if make clean && make STRATEGY=$STRATEGY; then
+    echo -e "${GREEN}✅ Compilation successful${NC}"
 else
-    echo -e "${GREEN}✅ Optimizer already compiled (up to date)${NC}"
+    echo -e "${RED}❌ Compilation failed${NC}"
+    exit 1
 fi
 
 echo ""
