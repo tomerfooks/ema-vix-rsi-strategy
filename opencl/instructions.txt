@@ -4,6 +4,8 @@ Step 1:
 ./run.sh symbol interval strategy
 #for exampel: ./run.sh qqq 1d adaptive_ema_v1 nosave
 *its important to run with 'nosave' flag, to prevent saving results for each iteration. only remove the nosave flag when you're done optimizng. 
+before starting, go over the proper interval config (config_1h/4h/1d) and reset the params to the BASE default params (commented out) to make sure you start from a nuetral position.
+
 
 Step 2: go over resulsts:
 ###
@@ -61,8 +63,10 @@ will look like this:
 
 Step 3: tweak/modify base default params, based on recommendation (relevant config file will be located in strategies/strategy/config_1d | #for example: strategies/adaptive_ema_v1/config_1d)
 you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization.
+USE bigger ranges for smaller numbers (for example, fast ema's) and smaller ranges for biggern number. this will make the values in the ranges more symmetrical when optimizng. 
 Also, always GO OVER THE TRADES LIST, AND PAY ATTENTION TO THE BIG LOSERS TRADES. JUST TO FIGURE OUT WHAT HAPPENED AND MANUALLY CHANGE DEFAULT PARAMETERS.
 please also pay attention to the BASE values (commented out) in each config (1h/4h/1d) so you will have a reffernec point, if you went too far from those values - consider tuning.
+
 
 Step 4: repeat the process at least 10 times, until very good results (significantly Outperformancing buy and hold). if you cant generate good results, get creative and change the default params significantly (not essentialy the search ranges params in that case)
 

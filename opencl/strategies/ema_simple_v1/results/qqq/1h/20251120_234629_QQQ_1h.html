@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QQQ 1h - ema_simple_v1 Results</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e17; color: #e4e4e7; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; margin-bottom: 10px; color: #60a5fa; }
+    h2 { font-size: 1.5rem; margin: 30px 0 15px; color: #a78bfa; border-bottom: 2px solid #374151; padding-bottom: 10px; }
+    .meta { color: #9ca3af; margin-bottom: 30px; font-size: 0.95rem; }
+    .meta span { margin-right: 20px; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .metric-card { background: #1e293b; padding: 20px; border-radius: 8px; border-left: 4px solid #60a5fa; }
+    .metric-label { font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-value { font-size: 1.8rem; font-weight: 700; margin-top: 8px; }
+    .positive { color: #34d399; }
+    .negative { color: #f87171; }
+    .neutral { color: #60a5fa; }
+    .chart-container { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .params { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .param-item { padding: 10px; background: #0f172a; border-radius: 4px; }
+    .param-name { font-size: 0.8rem; color: #9ca3af; }
+    .param-value { font-size: 1.1rem; font-weight: 600; color: #e4e4e7; margin-top: 4px; }
+    .trades-table { width: 100%; background: #1e293b; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #0f172a; padding: 12px; text-align: left; font-weight: 600; color: #a78bfa; font-size: 0.85rem; text-transform: uppercase; }
+    td { padding: 12px; border-top: 1px solid #374151; }
+    tr:hover { background: #0f172a; }
+    .buy { color: #34d399; font-weight: 600; }
+    .sell { color: #f87171; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QQQ 1h Strategy Results</h1>
+    <div class="meta">
+      <span><strong>Strategy:</strong> ema_simple_v1</span>
+      <span><strong>Generated:</strong> 20251120_234629</span>
+      <span><strong>Data:</strong> <a href="../../../data/qqq_1h.csv" style="color: #60a5fa;">../../../data/qqq_1h.csv</a></span>
+    </div>
+
+    <h2>Performance Metrics</h2>
+    <div id="metrics" class="metrics"></div>
+
+    <h2>Price Chart with Trades</h2>
+    <div class="chart-container">
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <h2>Optimized Parameters</h2>
+    <div id="parameters" class="params"></div>
+
+    <h2>Trade Log</h2>
+    <div class="trades-table">
+      <table id="tradesTable"></table>
+    </div>
+  </div>
+
+  <script>
+    const embeddedData = {
+  "ticker": "QQQ",
+  "interval": "1h",
+  "strategy": "ema_simple_v1",
+  "timestamp": "20251120_234629",
+  "candles": 1250,
+  "performance": {
+    "total_return": 17.29,
+    "max_drawdown": 6.32,
+    "calmar_ratio": 2.74,
+    "sharpe_ratio": 0.08,
+    "total_trades": 611,
+    "buy_hold_return": 19.06,
+    "outperformance": -1.77
+  },
+  "parameters": {
+    "fast_length": 0,
+    "slow_length": 4
+  },
+  "trades": [
+    {
+      "trade_number": 1,
+      "action": "BUY",
+      "price": 477.45,
+      "date": "2025-03-10 16:30:00",
+      "candle_index": 2
+    },
+    {
+      "trade_number": 2,
+      "action": "SELL",
+      "price": 476.15,
+      "date": "2025-03-10 17:30:00",
+      "candle_index": 3,
+      "pnl_percent": -0.27
+    },
+    {
+      "trade_number": 3,
+      "action": "BUY",
+      "price": 474.37,
+      "date": "2025-03-10 18:30:00",
+      "candle_index": 4
+    },
+    {
+      "trade_number": 4,
+      "action": "SELL",
+      "price": 472.56,
+      "date": "2025-03-10 19:30:00",
+      "candle_index": 5,
+      "pnl_percent": -0.38
+    },
+    {
+      "trade_number": 5,
+      "action": "BUY",
+      "price": 472.63,
+      "date": "2025-03-10 20:30:00",
+      "candle_index": 6
+    },
+    {
+      "trade_number": 6,
+      "action": "SELL",
+      "price": 473.30,
+      "date": "2025-03-10 21:30:00",
+      "candle_index": 7,
+      "pnl_percent": 0.14
+    },
+    {
+      "trade_number": 7,
+      "action": "BUY",
+      "price": 469.92,
+      "date": "2025-03-11 15:30:00",
+      "candle_index": 8
+    },
+    {
+      "trade_number": 8,
+      "action": "SELL",
+      "price": 472.57,
+      "date": "2025-03-11 16:30:00",
+      "candle_index": 9,
+      "pnl_percent": 0.56
+    },
+    {
+      "trade_number": 9,
+      "action": "BUY",
+      "price": 471.43,
+      "date": "2025-03-11 17:30:00",
+      "candle_index": 10
+    },
+    {
+      "trade_number": 10,
+      "action": "SELL",
+      "price": 467.21,
+      "date": "2025-03-11 18:30:00",
+      "candle_index": 11,
+      "pnl_percent": -0.90
+    },
+    {
+      "trade_number": 11,
+      "action": "BUY",
+      "price": 474.47,
+      "date": "2025-03-11 19:30:00",
+      "candle_index": 12
+    },
+    {
+      "trade_number": 12,
+      "action": "SELL",
+      "price": 475.48,
+      "date": "2025-03-11 20:30:00",
+      "candle_index": 13,
+      "pnl_percent": 0.21
+    },
+    {
+      "trade_number": 13,
+      "action": "BUY",
+      "price": 471.67,
+      "date": "2025-03-11 21:30:00",
+      "candle_index": 14
+    },
+    {
+      "trade_number": 14,
+      "action": "SELL",
+      "price": 477.55,
+      "date": "2025-03-12 15:30:00",
+      "candle_index": 15,
+      "pnl_percent": 1.25
+    },
+    {
+      "trade_number": 15,
+      "action": "BUY",
+      "price": 474.92,
+      "date": "2025-03-12 16:30:00",
+      "candle_index": 16
+    },
+    {
+      "trade_number": 16,
+      "action": "SELL",
+      "price": 477.79,
+      "date": "2025-03-12 19:30:00",
+      "candle_index": 19,
+      "pnl_percent": 0.60
+    },
+    {
+      "trade_number": 17,
+      "action": "BUY",
+      "price": 477.27,
+      "date": "2025-03-12 20:30:00",
+      "candle_index": 20
+    },
+    {
+      "trade_number": 18,
+      "action": "SELL",
+      "price": 477.08,
+      "date": "2025-03-12 21:30:00",
+      "candle_index": 21,
+      "pnl_percent": -0.04
+    },
+    {
+      "trade_number": 19,
+      "action": "BUY",
+      "price": 470.27,
+      "date": "2025-03-13 19:30:00",
+      "candle_index": 26
+    },
+    {
+      "trade_number": 20,
+      "action": "SELL",
+      "price": 468.63,
+      "date": "2025-03-13 20:30:00",
+      "candle_index": 27,
+      "pnl_percent": -0.35
+    },
+    {
+      "trade_number": 21,
+      "action": "BUY",
+      "price": 468.35,
+      "date": "2025-03-13 21:30:00",
+      "candle_index": 28
+    },
+    {
+      "trade_number": 22,
+      "action": "SELL",
+      "price": 477.39,
+      "date": "2025-03-14 17:30:00",
+      "candle_index": 31,
+      "pnl_percent": 1.93
+    },
+    {
+      "trade_number": 23,
+      "action": "BUY",
+      "price": 478.33,
+      "date": "2025-03-14 18:30:00",
+      "candle_index": 32
+    },
+    {
+      "trade_number": 24,
+      "action": "SELL",
+      "price": 477.84,
+      "date": "2025-03-14 19:30:00",
+      "candle_index": 33,
+      "pnl_percent": -0.10
+    },
+    {
+      "trade_number": 25,
+      "action": "BUY",
+      "price": 478.71,
+      "date": "2025-03-14 20:30:00",
+      "candle_index": 34
+    },
+    {
+      "trade_number": 26,
+      "action": "SELL",
+      "price": 479.65,
+      "date": "2025-03-14 21:30:00",
+      "candle_index": 35,
+      "pnl_percent": 0.20
+    },
+    {
+      "trade_number": 27,
+      "action": "BUY",
+      "price": 479.96,
+      "date": "2025-03-17 15:30:00",
+      "candle_index": 36
+    },
+    {
+      "trade_number": 28,
+      "action": "SELL",
+      "price": 479.11,
+      "date": "2025-03-17 16:30:00",
+      "candle_index": 37,
+      "pnl_percent": -0.18
+    },
+    {
+      "trade_number": 29,
+      "action": "BUY",
+      "price": 478.74,
+      "date": "2025-03-17 17:30:00",
+      "candle_index": 38
+    },
+    {
+      "trade_number": 30,
+      "action": "SELL",
+      "price": 481.02,
+      "date": "2025-03-17 18:30:00",
+      "candle_index": 39,
+      "pnl_percent": 0.48
+    },
+    {
+      "trade_number": 31,
+      "action": "BUY",
+      "price": 484.85,
+      "date": "2025-03-17 19:30:00",
+      "candle_index": 40
+    },
+    {
+      "trade_number": 32,
+      "action": "SELL",
+      "price": 484.84,
+      "date": "2025-03-17 20:30:00",
+      "candle_index": 41,
+      "pnl_percent": -0.00
+    },
+    {
+      "trade_number": 33,
+      "action": "BUY",
+      "price": 482.73,
+      "date": "2025-03-17 21:30:00",
+      "candle_index": 42
+    },
+    {
+      "trade_number": 34,
+      "action": "SELL",
+      "price": 474.71,
+      "date": "2025-03-18 15:30:00",
+      "candle_index": 43,
+      "pnl_percent": -1.66
+    },
+    {
+      "trade_number": 35,
+      "action": "BUY",
+      "price": 473.94,
+      "date": "2025-03-18 16:30:00",
+      "candle_index": 44
+    },
+    {
+      "trade_number": 36,
+      "action": "SELL",
+      "price": 475.85,
+      "date": "2025-03-18 17:30:00",
+      "candle_index": 45,
+      "pnl_percent": 0.40
+    },
+    {
+      "trade_number": 37,
+      "action": "BUY",
+      "price": 474.66,
+      "date": "2025-03-18 18:30:00",
+      "candle_index": 46
+    },
+    {
+      "trade_number": 38,
+      "action": "SELL",
+      "price": 474.64,
+      "date": "2025-03-18 19:30:00",
+      "candle_index": 47,
+      "pnl_percent": -0.00
+    },
+    {
+      "trade_number": 39,
+      "action": "BUY",
+      "price": 474.88,
+      "date": "2025-03-18 20:30:00",
+      "candle_index": 48
+    },
+    {
+      "trade_number": 40,
+      "action": "SELL",
+      "price": 474.71,
+      "date": "2025-03-18 21:30:00",
+      "candle_index": 49,
+      "pnl_percent": -0.03
+    },
+    {
+      "trade_number": 41,
+      "action": "BUY",
+      "price": 478.27,
+      "date": "2025-03-19 15:30:00",
+      "candle_index": 50
+    },
+    {
+      "trade_number": 42,
+      "action": "SELL",
+      "price": 478.88,
+      "date": "2025-03-19 16:30:00",
+      "candle_index": 51,
+      "pnl_percent": 0.13
+    },
+    {
+      "trade_number": 43,
+      "action": "BUY",
+      "price": 479.68,
+      "date": "2025-03-19 17:30:00",
+      "candle_index": 52
+    },
+    {
+      "trade_number": 44,
+      "action": "SELL",
+      "price": 477.31,
+      "date": "2025-03-19 18:30:00",
+      "candle_index": 53,
+      "pnl_percent": -0.50
+    },
+    {
+      "trade_number": 45,
+      "action": "BUY",
+      "price": 478.77,
+      "date": "2025-03-19 19:30:00",
+      "candle_index": 54
+    },
+    {
+      "trade_number": 46,
+      "action": "SELL",
+      "price": 480.86,
+      "date": "2025-03-19 20:30:00",
+      "candle_index": 55,
+      "pnl_percent": 0.44
+    },
+    {
+      "trade_number": 47,
+      "action": "BUY",
+      "price": 480.79,
+      "date": "2025-03-19 21:30:00",
+      "candle_index": 56
+    },
+    {
+      "trade_number": 48,
+      "action": "SELL",
+      "price": 483.36,
+      "date": "2025-03-20 15:30:00",
+      "candle_index": 57,
+      "pnl_percent": 0.54
+    },
+    {
+      "trade_number": 49,
+      "action": "BUY",
+      "price": 482.95,
+      "date": "2025-03-20 16:30:00",
+      "candle_index": 58
+    },
+    {
+      "trade_number": 50,
+      "action": "SELL",
+      "price": 479.22,
+      "date": "2025-03-20 17:30:00",
+      "candle_index": 59,
+      "pnl_percent": -0.77
+    },
+    {
+      "trade_number": 51,
+      "action": "BUY",
+      "price": 478.07,
+      "date": "2025-03-20 18:30:00",
+      "candle_index": 60
+    },
+    {
+      "trade_number": 52,
+      "action": "SELL",
+      "price": 477.53,
+      "date": "2025-03-20 19:30:00",
+      "candle_index": 61,
+      "pnl_percent": -0.11
+    },
+    {
+      "trade_number": 53,
+      "action": "BUY",
+      "price": 478.07,
+      "date": "2025-03-20 20:30:00",
+      "candle_index": 62
+    },
+    {
+      "trade_number": 54,
+      "action": "SELL",
+      "price": 479.35,
+      "date": "2025-03-20 21:30:00",
+      "candle_index": 63,
+      "pnl_percent": 0.27
+    },
+    {
+      "trade_number": 55,
+      "action": "BUY",
+      "price": 476.16,
+      "date": "2025-03-21 15:30:00",
+      "candle_index": 64
+    },
+    {
+      "trade_number": 56,
+      "action": "SELL",
+      "price": 475.50,
+      "date": "2025-03-21 16:30:00",
+      "candle_index": 65,
+      "pnl_percent": -0.14
+    },
+    {
+      "trade_number": 57,
+      "action": "BUY",
+      "price": 478.49,
+      "date": "2025-03-21 17:30:00",
+      "candle_index": 66
+    },
+    {
+      "trade_number": 58,
+      "action": "SELL",
+      "price": 477.95,
+      "date": "2025-03-21 18:30:00",
+      "candle_index": 67,
+      "pnl_percent": -0.11
+    },
+    {
+      "trade_number": 59,
+      "action": "BUY",
+      "price": 478.40,
+      "date": "2025-03-21 19:30:00",
+      "candle_index": 68
+    },
+    {
+      "trade_number": 60,
+      "action": "SELL",
+      "price": 478.34,
+      "date": "2025-03-21 20:30:00",
+      "candle_index": 69,
+      "pnl_percent": -0.01
+    },
+    {
+      "trade_number": 61,
+      "action": "BUY",
+      "price": 481.14,
+      "date": "2025-03-21 21:30:00",
+      "candle_index": 70
+    },
+    {
+      "trade_number": 62,
+      "action": "SELL",
+      "price": 489.71,
+      "date": "2025-03-24 15:30:00",
+      "candle_index": 71,
+      "pnl_percent": 1.78
+    },
+    {
+      "trade_number": 63,
+      "action": "BUY",
+      "price": 490.11,
+      "date": "2025-03-24 16:30:00",
+      "candle_index": 72
+    },
+    {
+      "trade_number": 64,
+      "action": "SELL",
+      "price": 489.69,
+      "date": "2025-03-24 17:30:00",
+      "candle_index": 73,
+      "pnl_percent": -0.09
+    },
+    {
+      "trade_number": 65,
+      "action": "BUY",
+      "price": 489.70,
+      "date": "2025-03-24 18:30:00",
+      "candle_index": 74
+    },
+    {
+      "trade_number": 66,
+      "action": "SELL",
+      "price": 489.64,
+      "date": "2025-03-24 19:30:00",
+      "candle_index": 75,
+      "pnl_percent": -0.01
+    },
+    {
+      "trade_number": 67,
+      "action": "BUY",
+      "price": 490.51,
+      "date": "2025-03-24 20:30:00",
+      "candle_index": 76
+    },
+    {
+      "trade_number": 68,
+      "action": "SELL",
+      "price": 490.48,
+      "date": "2025-03-24 21:30:00",
+      "candle_index": 77,
+      "pnl_percent": -0.01
+    },
+    {
+      "trade_number": 69,
+      "action": "BUY",
+      "price": 492.65,
+      "date": "2025-03-25 15:30:00",
+      "candle_index": 78
+    },
+    {
+      "trade_number": 70,
+      "action": "SELL",
+      "price": 493.13,
+      "date": "2025-03-25 16:30:00",
+      "candle_index": 79,
+      "pnl_percent": 0.10
+    },
+    {
+      "trade_number": 71,
+      "action": "BUY",
+      "price": 492.11,
+      "date": "2025-03-25 17:30:00",
+      "candle_index": 80
+    },
+    {
+      "trade_number": 72,
+      "action": "SELL",
+      "price": 491.52,
+      "date": "2025-03-25 18:30:00",
+      "candle_index": 81,
+      "pnl_percent": -0.12
+    },
+    {
+      "trade_number": 73,
+      "action": "BUY",
+      "price": 492.13,
+      "date": "2025-03-25 19:30:00",
+      "candle_index": 82
+    },
+    {
+      "trade_number": 74,
+      "action": "SELL",
+      "price": 492.22,
+      "date": "2025-03-25 20:30:00",
+      "candle_index": 83,
+      "pnl_percent": 0.02
+    },
+    {
+      "trade_number": 75,
+      "action": "BUY",
+      "price": 493.46,
+      "date": "2025-03-25 21:30:00",
+      "candle_index": 84
+    },
+    {
+      "trade_number": 76,
+      "action": "SELL",
+      "price": 488.60,
+      "date": "2025-03-26 15:30:00",
+      "candle_index": 85,
+      "pnl_percent": -0.98
+    },
+    {
+      "trade_number": 77,
+      "action": "BUY",
+      "price": 488.35,
+      "date": "2025-03-26 16:30:00",
+      "candle_index": 86
+    },
+    {
+      "trade_number": 78,
+      "action": "SELL",
+      "price": 486.74,
+      "date": "2025-03-26 17:30:00",
+      "candle_index": 87,
+      "pnl_percent": -0.33
+    },
+    {
+      "trade_number": 79,
+      "action": "BUY",
+      "price": 484.66,
+      "date": "2025-03-26 18:30:00",
+      "candle_index": 88
+    },
+    {
+      "trade_number": 80,
+      "action": "SELL",
+      "price": 485.03,
+      "date": "2025-03-26 19:30:00",
+      "candle_index": 89,
+      "pnl_percent": 0.08
+    },
+    {
+      "trade_number": 81,
+      "action": "BUY",
+      "price": 483.28,
+      "date": "2025-03-26 20:30:00",
+      "candle_index": 90
+    },
+    {
+      "trade_number": 82,
+      "action": "SELL",
+      "price": 484.41,
+      "date": "2025-03-26 21:30:00",
+      "candle_index": 91,
+      "pnl_percent": 0.23
+    },
+    {
+      "trade_number": 83,
+      "action": "BUY",
+      "price": 484.69,
+      "date": "2025-03-27 15:30:00",
+      "candle_index": 92
+    },
+    {
+      "trade_number": 84,
+      "action": "SELL",
+      "price": 484.97,
+      "date": "2025-03-27 16:30:00",
+      "candle_index": 93,
+      "pnl_percent": 0.06
+    },
+    {
+      "trade_number": 85,
+      "action": "BUY",
+      "price": 483.67,
+      "date": "2025-03-27 17:30:00",
+      "candle_index": 94
+    },
+    {
+      "trade_number": 86,
+      "action": "SELL",
+      "price": 482.02,
+      "date": "2025-03-27 18:30:00",
+      "candle_index": 95,
+      "pnl_percent": -0.34
+    },
+    {
+      "trade_number": 87,
+      "action": "BUY",
+      "price": 483.14,
+      "date": "2025-03-27 19:30:00",
+      "candle_index": 96
+    },
+    {
+      "trade_number": 88,
+      "action": "SELL",
+      "price": 484.41,
+      "date": "2025-03-27 20:30:00",
+      "candle_index": 97,
+      "pnl_percent": 0.26
+    },
+    {
+      "trade_number": 89,
+      "action": "BUY",
+      "price": 481.60,
+      "date": "2025-03-27 21:30:00",
+      "candle_index": 98
+    },
+    {
+      "trade_number": 90,
+      "action": "SELL",
+      "price": 473.21,
+      "date": "2025-03-28 16:30:00",
+      "candle_index": 99,
+      "pnl_percent": -1.74
+    },
+    {
+      "trade_number": 91,
+      "action": "BUY",
+      "price": 472.38,
+      "date": "2025-03-28 17:30:00",
+      "candle_index": 100
+    },
+    {
+      "trade_number": 92,
+      "action": "SELL",
+      "price": 469.95,
+      "date": "2025-03-28 18:30:00",
+      "candle_index": 101,
+      "pnl_percent": -0.51
+    },
+    {
+      "trade_number": 93,
+      "action": "BUY",
+      "price": 468.79,
+      "date": "2025-03-28 19:30:00",
+      "candle_index": 102
+    },
+    {
+      "trade_number": 94,
+      "action": "SELL",
+      "price": 469.36,
+      "date": "2025-03-28 20:30:00",
+      "candle_index": 103,
+      "pnl_percent": 0.12
+    },
+    {
+      "trade_number": 95,
+      "action": "BUY",
+      "price": 468.96,
+      "date": "2025-03-28 21:30:00",
+      "candle_index": 104
+    },
+    {
+      "trade_number": 96,
+      "action": "SELL",
+      "price": 468.97,
+      "date": "2025-03-28 22:30:00",
+      "candle_index": 105,
+      "pnl_percent": 0.00
+    },
+    {
+      "trade_number": 97,
+      "action": "BUY",
+      "price": 459.35,
+      "date": "2025-03-31 16:30:00",
+      "candle_index": 106
+    },
+    {
+      "trade_number": 98,
+      "action": "SELL",
+      "price": 462.45,
+      "date": "2025-03-31 17:30:00",
+      "candle_index": 107,
+      "pnl_percent": 0.68
+    },
+    {
+      "trade_number": 99,
+      "action": "BUY",
+      "price": 464.81,
+      "date": "2025-03-31 18:30:00",
+      "candle_index": 108
+    },
+    {
+      "trade_number": 100,
+      "action": "SELL",
+      "price": 463.83,
+      "date": "2025-03-31 19:30:00",
+      "candle_index": 109,
+      "pnl_percent": -0.21
+    }
+  ]
+}
+;
+    
+    async function loadResults() {
+      const data = embeddedData;
+
+      const metricsDiv = document.getElementById('metrics');
+      const metrics = [
+        { label: 'Total Return', value: data.performance.total_return, suffix: '%', colorClass: data.performance.total_return > 0 ? 'positive' : 'negative' },
+        { label: 'Max Drawdown', value: data.performance.max_drawdown, suffix: '%', colorClass: 'negative' },
+        { label: 'Calmar Ratio', value: data.performance.calmar_ratio, suffix: '', colorClass: 'neutral' },
+        { label: 'Sharpe Ratio', value: data.performance.sharpe_ratio, suffix: '', colorClass: 'neutral' },
+        { label: 'Total Trades', value: data.performance.total_trades, suffix: '', colorClass: 'neutral' },
+        { label: 'Buy & Hold', value: data.performance.buy_hold_return, suffix: '%', colorClass: data.performance.buy_hold_return > 0 ? 'positive' : 'negative' },
+        { label: 'Outperformance', value: data.performance.outperformance, suffix: '%', colorClass: data.performance.outperformance > 0 ? 'positive' : 'negative' }
+      ];
+      metricsDiv.innerHTML = metrics.map(m => `<div class="metric-card"><div class="metric-label">${m.label}</div><div class="metric-value ${m.colorClass}">${m.value.toFixed(2)}${m.suffix}</div></div>`).join('');
+
+      const paramsDiv = document.getElementById('parameters');
+      const params = Object.entries(data.parameters).map(([key, value]) => `<div class="param-item"><div class="param-name">${key.replace(/_/g, ' ')}</div><div class="param-value">${value}</div></div>`).join('');
+      paramsDiv.innerHTML = `<div class="param-grid">${params}</div>`;
+
+      const tradesTable = document.getElementById('tradesTable');
+      const tradesHTML = `<thead><tr><th>#</th><th>Action</th><th>Price</th><th>Date</th><th>P&L</th></tr></thead><tbody>${data.trades.map(t => `<tr><td>${t.trade_number}</td><td class="${t.action.toLowerCase()}">${t.action}</td><td>$${t.price.toFixed(2)}</td><td>${t.date}</td><td class="${t.pnl_percent ? (t.pnl_percent > 0 ? 'positive' : 'negative') : ''}">${t.pnl_percent ? (t.pnl_percent > 0 ? '+' : '') + t.pnl_percent.toFixed(2) + '%' : '-'}</td></tr>`).join('')}</tbody>`;
+      tradesTable.innerHTML = tradesHTML;
+
+      // Generate trade markers for the chart
+      const tradeMarkers = data.trades.map(t => ({
+        date: t.date.split(' ')[0],
+        price: t.price,
+        action: t.action
+      }));
+
+      // Create price chart using trade data
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: { 
+          labels: tradeMarkers.map(t => t.date), 
+          datasets: [
+            { 
+              label: 'Trade Prices', 
+              data: tradeMarkers.map(t => t.price), 
+              borderColor: '#60a5fa', 
+              backgroundColor: 'rgba(96, 165, 250, 0.1)', 
+              borderWidth: 2, 
+              pointRadius: 4,
+              pointBackgroundColor: tradeMarkers.map(t => t.action === 'BUY' ? '#34d399' : '#f87171'),
+              pointBorderColor: tradeMarkers.map(t => t.action === 'BUY' ? '#34d399' : '#f87171'),
+              tension: 0.1 
+            }
+          ] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: true, 
+          aspectRatio: 2.5, 
+          plugins: { 
+            legend: { labels: { color: '#e4e4e7' } }, 
+            tooltip: { 
+              mode: 'index', 
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  const trade = tradeMarkers[context.dataIndex];
+                  return `${trade.action}: $${trade.price.toFixed(2)}`;
+                }
+              }
+            } 
+          }, 
+          scales: { 
+            x: { 
+              ticks: { color: '#9ca3af', maxTicksLimit: 12 }, 
+              grid: { color: '#374151' } 
+            }, 
+            y: { 
+              ticks: { color: '#9ca3af' }, 
+              grid: { color: '#374151' } 
+            } 
+          } 
+        }
+      });
+    }
+    loadResults();
+  </script>
+</body>
+</html>

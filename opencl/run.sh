@@ -128,7 +128,7 @@ echo -e "${YELLOW}🔨 Step 2/3: Compiling optimizer...${NC}"
 echo ""
 
 # Always clean before compiling to ensure config changes are picked up
-if make clean && make; then
+if make clean && make STRATEGY="$STRATEGY"; then
     echo -e "${GREEN}✅ Compilation successful${NC}"
 else
     echo -e "${RED}❌ Compilation failed${NC}"

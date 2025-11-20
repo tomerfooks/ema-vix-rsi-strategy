@@ -70,8 +70,9 @@ __kernel void optimize_strategy(
     int num_trade_returns = 0;
     
     // Previous EMA values for crossover detection
-    float prev_ema_fast = 0.0f;
-    float prev_ema_slow = 0.0f;
+    float prev_ema_fast_low = 0.0f, prev_ema_slow_low = 0.0f;
+    float prev_ema_fast_med = 0.0f, prev_ema_slow_med = 0.0f;
+    float prev_ema_fast_high = 0.0f, prev_ema_slow_high = 0.0f;
     
     // Backtest loop
     for (int i = vol_length + 1; i < num_candles; i++) {
@@ -87,35 +88,54 @@ __kernel void optimize_strategy(
         if (rank_pct < low_pct) regime = 0;
         else if (rank_pct > high_pct) regime = 2;
         
-        // Select EMA lengths based on regime
-        int fast_len, slow_len;
+        // Calculate all 3 EMA pairs (one for each regime) by recalculating from history
+        // Low volatility EMAs
+        float ema_fast_low = closes[0];
+        float ema_slow_low = closes[0];
+        float alpha_fast_low = 2.0f / (fast_low + 1.0f);
+        float alpha_slow_low = 2.0f / (slow_low + 1.0f);
+        for (int j = 1; j <= i; j++) {
+            ema_fast_low = alpha_fast_low * closes[j] + (1.0f - alpha_fast_low) * ema_fast_low;
+            ema_slow_low = alpha_slow_low * closes[j] + (1.0f - alpha_slow_low) * ema_slow_low;
+        }
+        
+        // Medium volatility EMAs
+        float ema_fast_med = closes[0];
+        float ema_slow_med = closes[0];
+        float alpha_fast_med = 2.0f / (fast_med + 1.0f);
+        float alpha_slow_med = 2.0f / (slow_med + 1.0f);
+        for (int j = 1; j <= i; j++) {
+            ema_fast_med = alpha_fast_med * closes[j] + (1.0f - alpha_fast_med) * ema_fast_med;
+            ema_slow_med = alpha_slow_med * closes[j] + (1.0f - alpha_slow_med) * ema_slow_med;
+        }
+        
+        // High volatility EMAs
+        float ema_fast_high = closes[0];
+        float ema_slow_high = closes[0];
+        float alpha_fast_high = 2.0f / (fast_high + 1.0f);
+        float alpha_slow_high = 2.0f / (slow_high + 1.0f);
+        for (int j = 1; j <= i; j++) {
+            ema_fast_high = alpha_fast_high * closes[j] + (1.0f - alpha_fast_high) * ema_fast_high;
+            ema_slow_high = alpha_slow_high * closes[j] + (1.0f - alpha_slow_high) * ema_slow_high;
+        }
+        
+        // Select the EMA pair based on current regime
+        float ema_fast, ema_slow, prev_ema_fast, prev_ema_slow;
         if (regime == 0) {
-            fast_len = fast_low;
-            slow_len = slow_low;
+            ema_fast = ema_fast_low;
+            ema_slow = ema_slow_low;
+            prev_ema_fast = prev_ema_fast_low;
+            prev_ema_slow = prev_ema_slow_low;
         } else if (regime == 2) {
-            fast_len = fast_high;
-            slow_len = slow_high;
+            ema_fast = ema_fast_high;
+            ema_slow = ema_slow_high;
+            prev_ema_fast = prev_ema_fast_high;
+            prev_ema_slow = prev_ema_slow_high;
         } else {
-            fast_len = fast_med;
-            slow_len = slow_med;
-        }
-        
-        // Calculate EMAs (simplified, assuming pre-warm)
-        float alpha_fast = 2.0f / (fast_len + 1.0f);
-        float alpha_slow = 2.0f / (slow_len + 1.0f);
-        
-        // Ensure we have enough data for EMA calculation
-        int start_fast = (i - fast_len >= 0) ? (i - fast_len) : 0;
-        int start_slow = (i - slow_len >= 0) ? (i - slow_len) : 0;
-        
-        // For simplicity, calculate EMAs on the fly (not optimal, but works)
-        float ema_fast = closes[start_fast];
-        float ema_slow = closes[start_slow];
-        for (int k = start_fast + 1; k <= i; k++) {
-            ema_fast = alpha_fast * closes[k] + (1.0f - alpha_fast) * ema_fast;
-        }
-        for (int k = start_slow + 1; k <= i; k++) {
-            ema_slow = alpha_slow * closes[k] + (1.0f - alpha_slow) * ema_slow;
+            ema_fast = ema_fast_med;
+            ema_slow = ema_slow_med;
+            prev_ema_fast = prev_ema_fast_med;
+            prev_ema_slow = prev_ema_slow_med;
         }
         
         // Entry signal: Fast EMA crosses above Slow EMA (actual crossover, not just being above)
@@ -157,8 +177,12 @@ __kernel void optimize_strategy(
         }
         
         // Store current EMAs for next iteration's crossover detection
-        prev_ema_fast = ema_fast;
-        prev_ema_slow = ema_slow;
+        prev_ema_fast_low = ema_fast_low;
+        prev_ema_slow_low = ema_slow_low;
+        prev_ema_fast_med = ema_fast_med;
+        prev_ema_slow_med = ema_slow_med;
+        prev_ema_fast_high = ema_fast_high;
+        prev_ema_slow_high = ema_slow_high;
         
         // Track drawdown
         float current_value = capital + position * closes[i];

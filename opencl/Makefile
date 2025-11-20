@@ -6,13 +6,16 @@ LDFLAGS = -framework OpenCL
 
 TARGET = optimize
 
-# Default strategy (can be overridden: make STRATEGY=adaptive_ema_v2)
+# Default strategy (can be overridden: make STRATEGY=ema_simple_v1)
 STRATEGY ?= adaptive_ema_v1
 
 # Strategy-specific source files
 ifeq ($(STRATEGY),adaptive_ema_v2)
 SRC = strategies/adaptive_ema_v2/optimize.c
 STRATEGY_DIR = strategies/adaptive_ema_v2
+else ifeq ($(STRATEGY),ema_simple_v1)
+SRC = strategies/ema_simple_v1/optimize.c
+STRATEGY_DIR = strategies/ema_simple_v1
 else
 SRC = strategies/adaptive_ema_v1/optimize.c
 STRATEGY_DIR = strategies/adaptive_ema_v1

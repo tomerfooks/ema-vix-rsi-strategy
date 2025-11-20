@@ -1,15 +1,11 @@
 //@version=5
-strategy("Adaptive EMA Strategy v1 - QQQ 1H Optimized", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, process_orders_on_close=true)
+strategy("Adaptive EMA Strategy v1 - QQQ 1H (Continuous Adaptive)", overlay=true, initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100, process_orders_on_close=true)
 
 // ============================================================
-// OPTIMIZED PARAMETERS FOR QQQ 1H
-// Performance: 8.85% return vs 6.93% buy & hold (1.92% outperformance)
-// Max Drawdown: 3.91% | Calmar Ratio: 2.26 | Sharpe: 1.32
-// 
-// NOTE: This Pine Script version may differ from OpenCL backtest due to:
-// 1. OpenCL recalculates full EMA history on each bar (not possible in Pine)
-// 2. Potential timezone/data differences between sources
-// 3. Regime switching causes EMA jumps that can create different signals
+// CONTINUOUS ADAPTIVE EMA APPROACH
+// This version maintains a single continuous EMA that adjusts its
+// responsiveness (alpha) based on current volatility regime.
+// No recalculation, no switching - just smooth adaptation.
 // ============================================================
 
 // Low Volatility Regime
@@ -52,21 +48,27 @@ is_low_vol = volatility <= vol_low
 is_high_vol = volatility >= vol_high
 is_med_vol = not is_low_vol and not is_high_vol
 
-// Calculate all EMAs for all regimes
-ema_fast_low = ta.ema(close, fast_low)
-ema_slow_low = ta.ema(close, slow_low)
-ema_fast_med = ta.ema(close, fast_med)
-ema_slow_med = ta.ema(close, slow_med)
-ema_fast_high = ta.ema(close, fast_high)
-ema_slow_high = ta.ema(close, slow_high)
-
-// Select the appropriate EMAs based on regime
-ema_fast = is_low_vol ? ema_fast_low : is_high_vol ? ema_fast_high : ema_fast_med
-ema_slow = is_low_vol ? ema_slow_low : is_high_vol ? ema_slow_high : ema_slow_med
-
-// Track what periods are being used
+// Select EMA periods based on regime
 fast_period = is_low_vol ? fast_low : is_high_vol ? fast_high : fast_med
 slow_period = is_low_vol ? slow_low : is_high_vol ? slow_high : slow_med
+
+// Calculate alpha values based on current regime
+alpha_fast = 2.0 / (fast_period + 1.0)
+alpha_slow = 2.0 / (slow_period + 1.0)
+
+// Continuous adaptive EMAs - initialize with medium volatility parameters
+// This gives proper starting values instead of both starting at same price
+var float ema_fast = na
+var float ema_slow = na
+
+// Initialize on first bar using medium volatility parameters
+if na(ema_fast)
+    ema_fast := ta.ema(close, fast_med)
+    ema_slow := ta.ema(close, slow_med)
+
+// Update EMAs using current alpha (regime-adjusted responsiveness)
+ema_fast := alpha_fast * close + (1.0 - alpha_fast) * ema_fast
+ema_slow := alpha_slow * close + (1.0 - alpha_slow) * ema_slow
 
 // ============================================================
 // TRADING SIGNALS

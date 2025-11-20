@@ -986,12 +986,7 @@ int main(int argc, char** argv) {
     float buy_hold_return = ((closes[num_candles - 1] - closes[0]) / closes[0]) * 100.0f;
     float strategy_outperformance = h_results[best_idx * 6 + 0] - buy_hold_return;
     
-    printf("\n============================================================\n");
-    printf("📈 PERFORMANCE COMPARISON\n");
-    printf("============================================================\n");
-    printf("   Buy & Hold Return: %.2f%%\n", buy_hold_return);
-    printf("   Strategy Outperformance: %.2f%%\n", strategy_outperformance);
-    
+
     // Display trades from best parameter set
     printf("\n============================================================\n");
     printf("📋 TRADE LOG (Best Parameters)\n");
@@ -1098,9 +1093,10 @@ int main(int argc, char** argv) {
         printf("\n⏭️  Skipping results export (nosave mode)\n");
     }
     
+    printf("============================================================\n");
+    printf("   Buy & Hold Return: %.2f%%\n", buy_hold_return);
+    printf("   Strategy Outperformance: %.2f%%\n", strategy_outperformance);
     printf("\n============================================================\n");
-    printf("📊 OPTIMIZATION COMPLETE\n");
-    printf("============================================================\n\n");
     
     // Cleanup
     clReleaseMemObject(d_closes);

@@ -128,7 +128,11 @@ def verify_trades(json_file, csv_file):
     print(f"Win Rate: {sum(1 for r in trade_returns if r > 0)/len(trade_returns)*100:.1f}%")
 
 if __name__ == '__main__':
-    json_file = 'strategies/adaptive_ema_v1/results/bmnr/1h/20251120_184041_BMNR_1h.json'
-    csv_file = 'data/bmnr_1h.csv'
+    if len(sys.argv) < 3:
+        print("Usage: python3 verify_backtest.py <json_file> <csv_file>")
+        sys.exit(1)
+    
+    json_file = sys.argv[1]
+    csv_file = sys.argv[2]
     
     verify_trades(json_file, csv_file)
