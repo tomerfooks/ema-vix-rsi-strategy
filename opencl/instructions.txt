@@ -61,11 +61,10 @@ will look like this:
 Step 3: tweak/modify base default params, based on recommendation (relevant config file will be located in strategies/strategy/config_1d | #for example: strategies/adaptive_ema_v1/config_1d)
 you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization.
 Also, always GO OVER THE TRADES LIST, AND PAY ATTENTION TO THE BIG LOSERS TRADES. JUST TO FIGURE OUT WHAT HAPPENED AND MANUALLY CHANGE DEFAULT PARAMETERS.
-
-
+please also pay attention to the BASE values (commented out) in each config (1h/4h/1d) so you will have a reffernec point, if you went too far from those values - consider tuning.
 Step 4: Run again
 
-Step 5: repeat the process around 10 times, until optimal results.
+Step 5: repeat the process atleast 10 times, until very good results. if you cant generate good results, get creative and change the default params significantly (not essentialy the search ranges params in that case)
 
 
 ___ Notes ___

@@ -10,20 +10,25 @@
 // ============================================================
 
 // Low Volatility Regime
+// BASE FAST_LOW_4H = 12, SLOW_LOW_4H = 71
 #define FAST_LOW_4H 12
 #define SLOW_LOW_4H 71
 
 // Medium Volatility Regime
+// BASE FAST_MED_4H = 25, SLOW_MED_4H = 89
 #define FAST_MED_4H 22
 #define SLOW_MED_4H 89
 
 // High Volatility Regime
+// BASE FAST_HIGH_4H = 37, SLOW_HIGH_4H = 109
 #define FAST_HIGH_4H 37
 #define SLOW_HIGH_4H 109
 
 // Volatility Calculation
+// BASE ATR_LENGTH_4H = 14, VOL_LENGTH_4H = 66
 #define ATR_LENGTH_4H 14
 #define VOL_LENGTH_4H 66
+// BASE LOW_VOL_PCT_4H = 25, HIGH_VOL_PCT_4H = 61
 #define LOW_VOL_PCT_4H 25
 #define HIGH_VOL_PCT_4H 61
 

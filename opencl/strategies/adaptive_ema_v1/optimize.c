@@ -44,7 +44,7 @@ typedef struct {
 // Forward declarations
 void export_results_to_json(const char* ticker, const char* interval, const char* strategy,
                             float* best_params, float* best_results, float* trade_log,
-                            time_t* timestamps, float* closes, int num_candles,
+                            long long* timestamps, float* closes, int num_candles,
                             float buy_hold_return);
 void generate_html_report(const char* json_filename, const char* ticker, 
                          const char* interval, const char* strategy,
@@ -172,7 +172,7 @@ void load_config(const char* interval, Config* config) {
 // Export results to JSON and HTML
 void export_results_to_json(const char* ticker, const char* interval, const char* strategy,
                             float* best_params, float* best_results, float* trade_log,
-                            time_t* timestamps, float* closes, int num_candles,
+                            long long* timestamps, float* closes, int num_candles,
                             float buy_hold_return) {
     
     // Create timestamp for filename
@@ -216,8 +216,8 @@ void export_results_to_json(const char* ticker, const char* interval, const char
     fprintf(json_file, "  \"performance\": {\n");
     fprintf(json_file, "    \"total_return\": %.2f,\n", best_results[0]);
     fprintf(json_file, "    \"max_drawdown\": %.2f,\n", best_results[1]);
-    fprintf(json_file, "    \"calmar_ratio\": %.2f,\n", best_results[2]);
-    fprintf(json_file, "    \"total_trades\": %d,\n", (int)best_results[3]);
+    fprintf(json_file, "    \"calmar_ratio\": %.2f,\n", best_results[0] / best_results[1]);
+    fprintf(json_file, "    \"total_trades\": %d,\n", (int)best_results[2]);  // Fixed: was [3], should be [2]
     fprintf(json_file, "    \"buy_hold_return\": %.2f,\n", buy_hold_return);
     fprintf(json_file, "    \"outperformance\": %.2f\n", best_results[0] - buy_hold_return);
     fprintf(json_file, "  },\n");
@@ -766,6 +766,11 @@ int main(int argc, char** argv) {
     float* h_results = malloc(num_combinations * 5 * sizeof(float));
     float* h_trade_log = calloc(300, sizeof(float)); // Max 100 trades * 3 floats
     
+    // Initialize results to invalid state
+    for (int i = 0; i < num_combinations * 5; i++) {
+        h_results[i] = 0.0f;
+    }
+    
     // Create GPU buffers
     cl_mem d_closes = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
                                      num_candles * sizeof(float), closes, &err);
@@ -887,8 +892,70 @@ int main(int argc, char** argv) {
     printf("\n============================================================\n");
     printf("📋 TRADE LOG (Best Parameters)\n");
     printf("============================================================\n");
+    
+    // === RE-RUN BEST PARAMETER SET TO GET ACCURATE TRADE LOG ===
+    // The optimization kernel only logs trades for idx==0, so we need to
+    // run a second pass with ONLY the best parameters to get the correct trade log
+    
+    if (best_idx >= 0) {
+        printf("   Re-running best parameters to generate accurate trade log...\n\n");
+        
+        // Create single-parameter buffer with best params
+        float best_params_only[10];
+        for (int i = 0; i < 10; i++) {
+            best_params_only[i] = h_params[best_idx * 10 + i];
+        }
+        
+        // Clear trade log
+        memset(h_trade_log, 0, 300 * sizeof(float));
+        
+        // Create new buffers for single-parameter run
+        cl_mem d_best_params = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                              10 * sizeof(float), best_params_only, &err);
+        cl_mem d_best_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                                               5 * sizeof(float), NULL, &err);
+        cl_mem d_best_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
+                                                 300 * sizeof(float), NULL, &err);
+        
+        // Set kernel arguments for single-parameter run
+        int single_combo = 1;
+        clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_best_params);
+        clSetKernelArg(kernel, 5, sizeof(cl_mem), &d_best_results);
+        clSetKernelArg(kernel, 6, sizeof(int), &single_combo);
+        clSetKernelArg(kernel, 7, sizeof(cl_mem), &d_best_trade_log);
+        
+        // Execute kernel with single work item
+        size_t single_global = 1;
+        clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &single_global, NULL, 0, NULL, NULL);
+        clFinish(queue);
+        
+        // Read the correct trade log AND results
+        float rerun_results[5];
+        clEnqueueReadBuffer(queue, d_best_results, CL_TRUE, 0,
+                           5 * sizeof(float), rerun_results, 0, NULL, NULL);
+        clEnqueueReadBuffer(queue, d_best_trade_log, CL_TRUE, 0,
+                           300 * sizeof(float), h_trade_log, 0, NULL, NULL);
+        
+        // Update the best results with the re-run values (they should match, but use re-run for consistency)
+        for (int i = 0; i < 5; i++) {
+            h_results[best_idx * 5 + i] = rerun_results[i];
+        }
+        
+        printf("   ✓ Trade log updated: %.0f round-trip trades\n\n", rerun_results[2]);
+        
+        // Cleanup single-run buffers
+        clReleaseMemObject(d_best_params);
+        clReleaseMemObject(d_best_results);
+        clReleaseMemObject(d_best_trade_log);
+        
+        // Restore kernel arguments to original (in case of future use)
+        clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_params);
+        clSetKernelArg(kernel, 5, sizeof(cl_mem), &d_results);
+        clSetKernelArg(kernel, 6, sizeof(int), &num_combinations);
+        clSetKernelArg(kernel, 7, sizeof(cl_mem), &d_trade_log);
+    }
+    
     int trade_count = 0;
-    int entry_idx = -1;
     float entry_price = 0.0f;
     
     for (int i = 0; i < 100; i++) {
@@ -906,7 +973,6 @@ int main(int argc, char** argv) {
         
         if (is_buy) {
             printf("   #%d  BUY  @ $%.2f on %s\n", ++trade_count, price, date_str);
-            entry_idx = candle_idx;
             entry_price = price;
         } else {
             float pnl = ((price - entry_price) / entry_price) * 100.0f;

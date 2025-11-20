@@ -10,22 +10,27 @@
 // ============================================================
 
 // Low Volatility Regime
-#define FAST_LOW_1D 1
-#define SLOW_LOW_1D 6
+// BASE FAST_LOW_1D = 6, SLOW_LOW_1D = 14
+#define FAST_LOW_1D 6
+#define SLOW_LOW_1D 14
 
 // Medium Volatility Regime
+// BASE FAST_MED_1D = 6, SLOW_MED_1D = 19   
 #define FAST_MED_1D 6
-#define SLOW_MED_1D 15
+#define SLOW_MED_1D 19
 
 // High Volatility Regime
-#define FAST_HIGH_1D 6
-#define SLOW_HIGH_1D 22
+// BASE FAST_HIGH_1D = 8, SLOW_HIGH_1D = 27
+#define FAST_HIGH_1D 8
+#define SLOW_HIGH_1D 27
 
 // Volatility Calculation
-#define ATR_LENGTH_1D 5
-#define VOL_LENGTH_1D 71
-#define LOW_VOL_PCT_1D 7
-#define HIGH_VOL_PCT_1D 55
+// BASE ATR_LENGTH_1D = 13, VOL_LENGTH_1D = 70
+#define ATR_LENGTH_1D 13
+#define VOL_LENGTH_1D 70
+// BASE LOW_VOL_PCT_1D = 25, HIGH_VOL_PCT_1D = 59
+#define LOW_VOL_PCT_1D 25
+#define HIGH_VOL_PCT_1D 59
 
 // Use percentage-based range for optimization
 #define USE_PERCENT_RANGE_1D

@@ -18,6 +18,9 @@ __kernel void optimize_strategy(
     int idx = get_global_id(0);
     if (idx >= num_combinations) return;
     
+    // Only log trades if this is a single-parameter run (num_combinations == 1)
+    int should_log = (num_combinations == 1) ? 1 : 0;
+    
     // Extract parameters for this combination
     int param_offset = idx * 10;
     int fast_low = (int)params[param_offset + 0];
@@ -59,7 +62,8 @@ __kernel void optimize_strategy(
     float position = 0.0f;
     float max_capital = capital;
     float max_drawdown = 0.0f;
-    int trades = 0;
+    int trades = 0;              // Count of round-trip trades (buy+sell pair)
+    int signals = 0;             // Count of individual signals (for logging)
     
     // Backtest loop
     for (int i = vol_length + 1; i < num_candles; i++) {
@@ -92,13 +96,17 @@ __kernel void optimize_strategy(
         float alpha_fast = 2.0f / (fast_len + 1.0f);
         float alpha_slow = 2.0f / (slow_len + 1.0f);
         
+        // Ensure we have enough data for EMA calculation
+        int start_fast = (i - fast_len >= 0) ? (i - fast_len) : 0;
+        int start_slow = (i - slow_len >= 0) ? (i - slow_len) : 0;
+        
         // For simplicity, calculate EMAs on the fly (not optimal, but works)
-        float ema_fast = closes[i - fast_len];
-        float ema_slow = closes[i - slow_len];
-        for (int k = i - fast_len + 1; k <= i; k++) {
+        float ema_fast = closes[start_fast];
+        float ema_slow = closes[start_slow];
+        for (int k = start_fast + 1; k <= i; k++) {
             ema_fast = alpha_fast * closes[k] + (1.0f - alpha_fast) * ema_fast;
         }
-        for (int k = i - slow_len + 1; k <= i; k++) {
+        for (int k = start_slow + 1; k <= i; k++) {
             ema_slow = alpha_slow * closes[k] + (1.0f - alpha_slow) * ema_slow;
         }
         
@@ -107,25 +115,27 @@ __kernel void optimize_strategy(
             position = capital / closes[i];
             capital = 0.0f;
             
-            // Log trade for first parameter set only
-            if (idx == 0 && trades < 100) {
-                trade_log[trades * 3 + 0] = (float)i;      // Candle index
-                trade_log[trades * 3 + 1] = closes[i];     // Entry price
-                trade_log[trades * 3 + 2] = 1.0f;          // Buy signal
+            // Log trade only if this is a single-parameter backtest
+            if (should_log && signals < 100) {
+                trade_log[signals * 3 + 0] = (float)i;      // Candle index
+                trade_log[signals * 3 + 1] = closes[i];     // Entry price
+                trade_log[signals * 3 + 2] = 1.0f;          // Buy signal
             }
-            trades++;
+            signals++;
         }
         // Exit signal: Fast EMA crosses below Slow EMA
         else if (position > 0.0f && ema_fast < ema_slow) {
             capital = position * closes[i];
             
-            if (idx == 0 && trades < 100) {
-                trade_log[trades * 3 + 0] = (float)i;
-                trade_log[trades * 3 + 1] = closes[i];
-                trade_log[trades * 3 + 2] = 0.0f;          // Sell signal
+            // Log trade only if this is a single-parameter backtest
+            if (should_log && signals < 100) {
+                trade_log[signals * 3 + 0] = (float)i;
+                trade_log[signals * 3 + 1] = closes[i];
+                trade_log[signals * 3 + 2] = 0.0f;          // Sell signal
             }
             position = 0.0f;
-            trades++;
+            signals++;
+            trades++;  // Count completed round-trip trade
         }
         
         // Track drawdown
