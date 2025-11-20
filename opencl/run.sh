@@ -1,11 +1,12 @@
 #!/bin/bash
 # OpenCL GPU Optimizer - Automated Workflow
-# Usage: ./run.sh <TICKER> <INTERVAL> [STRATEGY] [CANDLES]
+# Usage: ./run.sh <TICKER> <INTERVAL> [STRATEGY] [CANDLES|nosave]
 # Examples:
 #   ./run.sh GOOG 1h
 #   ./run.sh GOOG 1h adaptive_ema_v2
 #   ./run.sh QQQ 1d adaptive_ema_v1
 #   ./run.sh SPY 4h adaptive_ema_v2 600
+#   ./run.sh QQQ 1d adaptive_ema_v1 nosave
 
 set -e  # Exit on error
 
@@ -21,7 +22,7 @@ NC='\033[0m' # No Color
 if [ $# -lt 2 ]; then
     echo -e "${RED}❌ Error: Missing arguments${NC}"
     echo ""
-    echo "Usage: $0 <TICKER> <INTERVAL> [STRATEGY] [CANDLES]"
+    echo "Usage: $0 <TICKER> <INTERVAL> [STRATEGY] [CANDLES|nosave]"
     echo ""
     echo "Arguments:"
     echo "  TICKER    Stock ticker (e.g., GOOG, QQQ, SPY)"
@@ -29,12 +30,14 @@ if [ $# -lt 2 ]; then
     echo "  STRATEGY  Strategy version (optional, default: adaptive_ema_v1)"
     echo "            Options: adaptive_ema_v1, adaptive_ema_v2"
     echo "  CANDLES   Number of candles (optional, defaults: 1h=500, 4h=270, 1d=150)"
+    echo "  nosave    Skip saving JSON and HTML results"
     echo ""
     echo "Examples:"
     echo "  $0 GOOG 1h                      # Use v1, default candles"
     echo "  $0 GOOG 1h adaptive_ema_v2      # Use v2, default candles"
     echo "  $0 QQQ 1d adaptive_ema_v1       # Use v1, default candles"
     echo "  $0 SPY 4h adaptive_ema_v2 600   # Use v2, 600 candles"
+    echo "  $0 QQQ 1d adaptive_ema_v1 nosave # Use v1, no save results"
     echo ""
     echo "Strategy Comparison:"
     echo "  v1: 3 EMA pairs, ATR percentile, simpler"
@@ -44,13 +47,24 @@ fi
 
 TICKER=$1
 INTERVAL=$2
+NOSAVE_FLAG=""
 
 # Check if 3rd argument is a strategy name or a number
 if [ $# -ge 3 ]; then
-    # If it starts with "adaptive_" it's a strategy, otherwise it's candles
+    # If it starts with "adaptive_" it's a strategy, otherwise it could be candles or nosave
     if [[ "$3" =~ ^adaptive_ ]]; then
         STRATEGY=$3
-        CANDLES=$4
+        # Check 4th argument for candles or nosave
+        if [ $# -ge 4 ]; then
+            if [ "$4" = "nosave" ]; then
+                NOSAVE_FLAG="nosave"
+            else
+                CANDLES=$4
+            fi
+        fi
+    elif [ "$3" = "nosave" ]; then
+        STRATEGY="adaptive_ema_v1"
+        NOSAVE_FLAG="nosave"
     else
         STRATEGY="adaptive_ema_v1"
         CANDLES=$3
@@ -104,6 +118,9 @@ echo -e "  ${GREEN}Ticker:${NC}   $TICKER"
 echo -e "  ${GREEN}Interval:${NC} $INTERVAL"
 echo -e "  ${CYAN}Strategy:${NC} $STRATEGY"
 echo -e "  ${GREEN}Candles:${NC}  $CANDLES"
+if [ -n "$NOSAVE_FLAG" ]; then
+    echo -e "  ${YELLOW}Mode:${NC}     No-save (results won't be saved)"
+fi
 echo ""
 
 # Step 1: Fetch data
@@ -140,7 +157,7 @@ echo ""
 echo -e "${BLUE}════════════════════════════════════════════════════════${NC}"
 echo ""
 
-if ./optimize "$TICKER" "$INTERVAL"; then
+if ./optimize "$TICKER" "$INTERVAL" $NOSAVE_FLAG; then
     echo ""
     echo -e "${GREEN}════════════════════════════════════════════════════════${NC}"
     echo -e "${GREEN}✅ Optimization completed successfully!${NC}"

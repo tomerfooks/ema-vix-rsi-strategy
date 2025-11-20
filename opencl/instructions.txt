@@ -2,7 +2,7 @@ How to test and optimize a given symbol-interval-strategy
 
 Step 1:
 ./run.sh symbol interval strategy
-#for exampel: ./run.sh qqq 1d adaptive_ema_v1
+#for exampel: ./run.sh qqq 1d adaptive_ema_v1 nosave
 
 Step 2: go over resulsts:
 ###

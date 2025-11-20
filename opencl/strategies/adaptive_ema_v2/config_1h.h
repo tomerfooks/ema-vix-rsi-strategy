@@ -45,4 +45,27 @@
 // Parameter count for GPU kernel
 #define NUM_PARAMS_1H 9
 
+// ============================================================
+// COMPATIBILITY LAYER - Map v2 params to v1 optimizer structure
+// ============================================================
+// The optimizer expects v1-style triple-regime EMA parameters
+// Map v2's KAMA/ADX parameters to equivalent v1 parameter names
+
+// Low Volatility Regime (maps to KAMA parameters)
+#define FAST_LOW_1H KAMA_FAST_1H
+#define SLOW_LOW_1H KAMA_LENGTH_1H
+
+// Medium Volatility Regime (maps to ADX parameters)
+#define FAST_MED_1H ADX_LENGTH_1H
+#define SLOW_MED_1H ADX_PCT_LENGTH_1H
+
+// High Volatility Regime (maps to EMA scaling parameters)
+#define FAST_HIGH_1H MIN_EMA_LENGTH_1H
+#define SLOW_HIGH_1H BASE_EMA_LENGTH_1H
+
+// Volatility Calculation (direct mapping)
+#define VOL_LENGTH_1H ADX_SMOOTHING_1H
+#define LOW_VOL_PCT_1H 20  // Default percentile values
+#define HIGH_VOL_PCT_1H 70
+
 #endif // ADAPTIVE_EMA_V2_CONFIG_1H_H

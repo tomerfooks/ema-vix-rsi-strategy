@@ -1,10 +1,10 @@
 /*
- * OpenCL GPU-accelerated trading strategy optimizer
+ * OpenCL GPU-accelerated Adaptive EMA Strategy v1 Optimizer
  * Usage: ./optimize <TICKER> <INTERVAL>
  * Example: ./optimize GOOG 1h
  * 
  * Compilation:
- *   make
+ *   make STRATEGY=adaptive_ema_v1
  */
 
 #ifdef __APPLE__
@@ -21,22 +21,12 @@
 #include <sys/time.h>
 #include <ctype.h>
 
-// Strategy selection via compiler flags
-#ifndef STRATEGY_NAME
 #define STRATEGY_NAME "adaptive_ema_v1"
-#endif
 
-// Include strategy config files based on selected strategy
-#ifdef USE_STRATEGY_V2
-#include "strategies/adaptive_ema_v2/config_1h.h"
-#include "strategies/adaptive_ema_v2/config_4h.h"
-#include "strategies/adaptive_ema_v2/config_1d.h"
-#else
-// v1 strategy (default)
-#include "strategies/adaptive_ema_v1/config_1h.h"
-#include "strategies/adaptive_ema_v1/config_4h.h"
-#include "strategies/adaptive_ema_v1/config_1d.h"
-#endif
+// Include v1 strategy config files
+#include "config_1h.h"
+#include "config_4h.h"
+#include "config_1d.h"
 
 typedef struct {
     int fast_length_low_min, fast_length_low_max;
@@ -538,12 +528,12 @@ int load_csv(const char* filename, float** closes, float** highs, float** lows, 
 // Load OpenCL kernel from file
 char* load_kernel_source(const char* strategy_dir) {
     char kernel_path[512];
-    snprintf(kernel_path, sizeof(kernel_path), "strategies/%s/kernel.cl", strategy_dir);
+    snprintf(kernel_path, sizeof(kernel_path), "kernel.cl");
     
     FILE* file = fopen(kernel_path, "r");
     if (!file) {
         fprintf(stderr, "❌ Error: Could not open kernel file: %s\n", kernel_path);
-        fprintf(stderr, "   Make sure the strategy directory exists with kernel.cl\n");
+        fprintf(stderr, "   Make sure kernel.cl exists in the strategy directory\n");
         exit(1);
     }
     

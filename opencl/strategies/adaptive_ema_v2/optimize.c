@@ -1,10 +1,15 @@
 /*
- * OpenCL GPU-accelerated trading strategy optimizer
+ * OpenCL GPU-accelerated Adaptive KAMA-ADX Strategy v2 Optimizer
  * Usage: ./optimize <TICKER> <INTERVAL>
  * Example: ./optimize GOOG 1h
  * 
+ * 9 Parameters:
+ * 1. kama_length (10-30), 2. kama_fast (2-5), 3. kama_slow (20-40)
+ * 4. adx_length (10-20), 5. adx_smooth (10-20), 6. adx_threshold (20-35)
+ * 7. atr_length (10-20), 8. trail_atr_mult (1.5-2.5), 9. adx_pct_length (50-100)
+ * 
  * Compilation:
- *   make
+ *   make STRATEGY=adaptive_ema_v2
  */
 
 #ifdef __APPLE__
@@ -21,34 +26,26 @@
 #include <sys/time.h>
 #include <ctype.h>
 
-// Strategy selection via compiler flags
-#ifndef STRATEGY_NAME
-#define STRATEGY_NAME "adaptive_ema_v1"
-#endif
+#define STRATEGY_NAME "adaptive_ema_v2"
 
-// Include strategy config files based on selected strategy
-#ifdef USE_STRATEGY_V2
-#include "strategies/adaptive_ema_v2/config_1h.h"
-#include "strategies/adaptive_ema_v2/config_4h.h"
-#include "strategies/adaptive_ema_v2/config_1d.h"
-#else
-// v1 strategy (default)
-#include "strategies/adaptive_ema_v1/config_1h.h"
-#include "strategies/adaptive_ema_v1/config_4h.h"
-#include "strategies/adaptive_ema_v1/config_1d.h"
-#endif
+// Include v2 strategy config files
+#include "config_1h.h"
+#include "config_4h.h"
+#include "config_1d.h"
 
 typedef struct {
-    int fast_length_low_min, fast_length_low_max;
-    int slow_length_low_min, slow_length_low_max;
-    int fast_length_med_min, fast_length_med_max;
-    int slow_length_med_min, slow_length_med_max;
-    int fast_length_high_min, fast_length_high_max;
-    int slow_length_high_min, slow_length_high_max;
+    // KAMA parameters (3)
+    int kama_length_min, kama_length_max;
+    int kama_fast_min, kama_fast_max;
+    int kama_slow_min, kama_slow_max;
+    // ADX parameters (3 + threshold)
+    int adx_length_min, adx_length_max;
+    int adx_smooth_min, adx_smooth_max;
+    float adx_threshold_min, adx_threshold_max;
+    // ATR parameters (2 + trail mult)
     int atr_length_min, atr_length_max;
-    int volatility_length_min, volatility_length_max;
-    int low_vol_percentile_min, low_vol_percentile_max;
-    int high_vol_percentile_min, high_vol_percentile_max;
+    float trail_atr_mult_min, trail_atr_mult_max;
+    int adx_pct_length_min, adx_pct_length_max;
 } Config;
 
 // Forward declarations
@@ -60,123 +57,122 @@ void generate_html_report(const char* json_filename, const char* ticker,
                          const char* interval, const char* strategy,
                          const char* results_dir, const char* timestamp_str);
 
-// Load configuration based on interval
+// Load configuration based on interval - v2 uses KAMA-ADX parameters
 void load_config(const char* interval, Config* config) {
-    // Now reads from strategy config headers (config_1h.h, config_4h.h, config_1d.h)
-    // Edit those files to change parameters instead of editing this file!
+    // Reads v2 KAMA-ADX config from headers (config_1h.h, config_4h.h, config_1d.h)
     
     if (strcmp(interval, "1h") == 0) {
         #ifdef USE_PERCENT_RANGE_1H
             float percent = SEARCH_PERCENT_1H;
-            int default_fast_low = FAST_LOW_1H;
-            int default_slow_low = SLOW_LOW_1H;
-            int default_fast_med = FAST_MED_1H;
-            int default_slow_med = SLOW_MED_1H;
-            int default_fast_high = FAST_HIGH_1H;
-            int default_slow_high = SLOW_HIGH_1H;
-            int default_atr = ATR_LENGTH_1H;
-            int default_vol = VOL_LENGTH_1H;
-            int default_low_pct = LOW_VOL_PCT_1H;
-            int default_high_pct = HIGH_VOL_PCT_1H;
             
-            config->fast_length_low_min = (int)(default_fast_low * (1 - percent));
-            config->fast_length_low_max = (int)(default_fast_low * (1 + percent));
-            config->slow_length_low_min = (int)(default_slow_low * (1 - percent));
-            config->slow_length_low_max = (int)(default_slow_low * (1 + percent));
-            config->fast_length_med_min = (int)(default_fast_med * (1 - percent));
-            config->fast_length_med_max = (int)(default_fast_med * (1 + percent));
-            config->slow_length_med_min = (int)(default_slow_med * (1 - percent));
-            config->slow_length_med_max = (int)(default_slow_med * (1 + percent));
-            config->fast_length_high_min = (int)(default_fast_high * (1 - percent));
-            config->fast_length_high_max = (int)(default_fast_high * (1 + percent));
-            config->slow_length_high_min = (int)(default_slow_high * (1 - percent));
-            config->slow_length_high_max = (int)(default_slow_high * (1 + percent));
-            config->atr_length_min = (int)(default_atr * (1 - percent));
-            config->atr_length_max = (int)(default_atr * (1 + percent));
-            config->volatility_length_min = (int)(default_vol * (1 - percent));
-            config->volatility_length_max = (int)(default_vol * (1 + percent));
-            config->low_vol_percentile_min = (int)(default_low_pct * (1 - percent));
-            config->low_vol_percentile_max = (int)(default_low_pct * (1 + percent));
-            config->high_vol_percentile_min = (int)(default_high_pct * (1 - percent));
-            config->high_vol_percentile_max = (int)(default_high_pct * (1 + percent));
+            // KAMA parameters
+            int def_kama_len = KAMA_LENGTH_1H;
+            int def_kama_fast = KAMA_FAST_1H;
+            int def_kama_slow = KAMA_SLOW_1H;
+            config->kama_length_min = fmax(10, (int)(def_kama_len * (1 - percent)));
+            config->kama_length_max = fmin(30, (int)(def_kama_len * (1 + percent)));
+            config->kama_fast_min = fmax(2, (int)(def_kama_fast * (1 - percent)));
+            config->kama_fast_max = fmin(5, (int)(def_kama_fast * (1 + percent)));
+            config->kama_slow_min = fmax(20, (int)(def_kama_slow * (1 - percent)));
+            config->kama_slow_max = fmin(40, (int)(def_kama_slow * (1 + percent)));
+            
+            // ADX parameters
+            int def_adx_len = ADX_LENGTH_1H;
+            int def_adx_smooth = ADX_SMOOTHING_1H;
+            float def_adx_thresh = ADX_THRESHOLD_1H;
+            int def_adx_pct = ADX_PCT_LENGTH_1H;
+            config->adx_length_min = fmax(10, (int)(def_adx_len * (1 - percent)));
+            config->adx_length_max = fmin(20, (int)(def_adx_len * (1 + percent)));
+            config->adx_smooth_min = fmax(10, (int)(def_adx_smooth * (1 - percent)));
+            config->adx_smooth_max = fmin(20, (int)(def_adx_smooth * (1 + percent)));
+            config->adx_threshold_min = fmax(20.0f, def_adx_thresh * (1 - percent));
+            config->adx_threshold_max = fmin(35.0f, def_adx_thresh * (1 + percent));
+            config->adx_pct_length_min = fmax(50, (int)(def_adx_pct * (1 - percent)));
+            config->adx_pct_length_max = fmin(100, (int)(def_adx_pct * (1 + percent)));
+            
+            // ATR parameters
+            int def_atr = ATR_LENGTH_1H;
+            float def_trail = TRAIL_STOP_ATR_MULT_1H;
+            config->atr_length_min = fmax(10, (int)(def_atr * (1 - percent)));
+            config->atr_length_max = fmin(20, (int)(def_atr * (1 + percent)));
+            config->trail_atr_mult_min = fmax(1.5f, def_trail * (1 - percent));
+            config->trail_atr_mult_max = fmin(2.5f, def_trail * (1 + percent));
         #else
-            fprintf(stderr, "⚠️  Warning: Fixed range mode not implemented. Enable USE_PERCENT_RANGE_1H in config_1h.h\n");
+            fprintf(stderr, "⚠️  Error: USE_PERCENT_RANGE_1H not defined\n");
             exit(1);
         #endif
     } else if (strcmp(interval, "4h") == 0) {
         #ifdef USE_PERCENT_RANGE_4H
             float percent = SEARCH_PERCENT_4H;
-            int default_fast_low = FAST_LOW_4H;
-            int default_slow_low = SLOW_LOW_4H;
-            int default_fast_med = FAST_MED_4H;
-            int default_slow_med = SLOW_MED_4H;
-            int default_fast_high = FAST_HIGH_4H;
-            int default_slow_high = SLOW_HIGH_4H;
-            int default_atr = ATR_LENGTH_4H;
-            int default_vol = VOL_LENGTH_4H;
-            int default_low_pct = LOW_VOL_PCT_4H;
-            int default_high_pct = HIGH_VOL_PCT_4H;
             
-            config->fast_length_low_min = (int)(default_fast_low * (1 - percent));
-            config->fast_length_low_max = (int)(default_fast_low * (1 + percent));
-            config->slow_length_low_min = (int)(default_slow_low * (1 - percent));
-            config->slow_length_low_max = (int)(default_slow_low * (1 + percent));
-            config->fast_length_med_min = (int)(default_fast_med * (1 - percent));
-            config->fast_length_med_max = (int)(default_fast_med * (1 + percent));
-            config->slow_length_med_min = (int)(default_slow_med * (1 - percent));
-            config->slow_length_med_max = (int)(default_slow_med * (1 + percent));
-            config->fast_length_high_min = (int)(default_fast_high * (1 - percent));
-            config->fast_length_high_max = (int)(default_fast_high * (1 + percent));
-            config->slow_length_high_min = (int)(default_slow_high * (1 - percent));
-            config->slow_length_high_max = (int)(default_slow_high * (1 + percent));
-            config->atr_length_min = (int)(default_atr * (1 - percent));
-            config->atr_length_max = (int)(default_atr * (1 + percent));
-            config->volatility_length_min = (int)(default_vol * (1 - percent));
-            config->volatility_length_max = (int)(default_vol * (1 + percent));
-            config->low_vol_percentile_min = (int)(default_low_pct * (1 - percent));
-            config->low_vol_percentile_max = (int)(default_low_pct * (1 + percent));
-            config->high_vol_percentile_min = (int)(default_high_pct * (1 - percent));
-            config->high_vol_percentile_max = (int)(default_high_pct * (1 + percent));
+            int def_kama_len = KAMA_LENGTH_4H;
+            int def_kama_fast = KAMA_FAST_4H;
+            int def_kama_slow = KAMA_SLOW_4H;
+            config->kama_length_min = fmax(10, (int)(def_kama_len * (1 - percent)));
+            config->kama_length_max = fmin(30, (int)(def_kama_len * (1 + percent)));
+            config->kama_fast_min = fmax(2, (int)(def_kama_fast * (1 - percent)));
+            config->kama_fast_max = fmin(5, (int)(def_kama_fast * (1 + percent)));
+            config->kama_slow_min = fmax(20, (int)(def_kama_slow * (1 - percent)));
+            config->kama_slow_max = fmin(40, (int)(def_kama_slow * (1 + percent)));
+            
+            int def_adx_len = ADX_LENGTH_4H;
+            int def_adx_smooth = ADX_SMOOTHING_4H;
+            float def_adx_thresh = ADX_THRESHOLD_4H;
+            int def_adx_pct = ADX_PCT_LENGTH_4H;
+            config->adx_length_min = fmax(10, (int)(def_adx_len * (1 - percent)));
+            config->adx_length_max = fmin(20, (int)(def_adx_len * (1 + percent)));
+            config->adx_smooth_min = fmax(10, (int)(def_adx_smooth * (1 - percent)));
+            config->adx_smooth_max = fmin(20, (int)(def_adx_smooth * (1 + percent)));
+            config->adx_threshold_min = fmax(20.0f, def_adx_thresh * (1 - percent));
+            config->adx_threshold_max = fmin(35.0f, def_adx_thresh * (1 + percent));
+            config->adx_pct_length_min = fmax(50, (int)(def_adx_pct * (1 - percent)));
+            config->adx_pct_length_max = fmin(100, (int)(def_adx_pct * (1 + percent)));
+            
+            int def_atr = ATR_LENGTH_4H;
+            float def_trail = TRAIL_STOP_ATR_MULT_4H;
+            config->atr_length_min = fmax(10, (int)(def_atr * (1 - percent)));
+            config->atr_length_max = fmin(20, (int)(def_atr * (1 + percent)));
+            config->trail_atr_mult_min = fmax(1.5f, def_trail * (1 - percent));
+            config->trail_atr_mult_max = fmin(2.5f, def_trail * (1 + percent));
         #else
-            fprintf(stderr, "⚠️  Warning: Fixed range mode not implemented. Enable USE_PERCENT_RANGE_4H in config_4h.h\n");
+            fprintf(stderr, "⚠️  Error: USE_PERCENT_RANGE_4H not defined\n");
             exit(1);
         #endif
     } else { // 1d
         #ifdef USE_PERCENT_RANGE_1D
             float percent = SEARCH_PERCENT_1D;
-            int default_fast_low = FAST_LOW_1D;
-            int default_slow_low = SLOW_LOW_1D;
-            int default_fast_med = FAST_MED_1D;
-            int default_slow_med = SLOW_MED_1D;
-            int default_fast_high = FAST_HIGH_1D;
-            int default_slow_high = SLOW_HIGH_1D;
-            int default_atr = ATR_LENGTH_1D;
-            int default_vol = VOL_LENGTH_1D;
-            int default_low_pct = LOW_VOL_PCT_1D;
-            int default_high_pct = HIGH_VOL_PCT_1D;
             
-            config->fast_length_low_min = (int)(default_fast_low * (1 - percent));
-            config->fast_length_low_max = (int)(default_fast_low * (1 + percent));
-            config->slow_length_low_min = (int)(default_slow_low * (1 - percent));
-            config->slow_length_low_max = (int)(default_slow_low * (1 + percent));
-            config->fast_length_med_min = (int)(default_fast_med * (1 - percent));
-            config->fast_length_med_max = (int)(default_fast_med * (1 + percent));
-            config->slow_length_med_min = (int)(default_slow_med * (1 - percent));
-            config->slow_length_med_max = (int)(default_slow_med * (1 + percent));
-            config->fast_length_high_min = (int)(default_fast_high * (1 - percent));
-            config->fast_length_high_max = (int)(default_fast_high * (1 + percent));
-            config->slow_length_high_min = (int)(default_slow_high * (1 - percent));
-            config->slow_length_high_max = (int)(default_slow_high * (1 + percent));
-            config->atr_length_min = (int)(default_atr * (1 - percent));
-            config->atr_length_max = (int)(default_atr * (1 + percent));
-            config->volatility_length_min = (int)(default_vol * (1 - percent));
-            config->volatility_length_max = (int)(default_vol * (1 + percent));
-            config->low_vol_percentile_min = (int)(default_low_pct * (1 - percent));
-            config->low_vol_percentile_max = (int)(default_low_pct * (1 + percent));
-            config->high_vol_percentile_min = (int)(default_high_pct * (1 - percent));
-            config->high_vol_percentile_max = (int)(default_high_pct * (1 + percent));
+            int def_kama_len = KAMA_LENGTH_1D;
+            int def_kama_fast = KAMA_FAST_1D;
+            int def_kama_slow = KAMA_SLOW_1D;
+            config->kama_length_min = fmax(10, (int)(def_kama_len * (1 - percent)));
+            config->kama_length_max = fmin(30, (int)(def_kama_len * (1 + percent)));
+            config->kama_fast_min = fmax(2, (int)(def_kama_fast * (1 - percent)));
+            config->kama_fast_max = fmin(5, (int)(def_kama_fast * (1 + percent)));
+            config->kama_slow_min = fmax(20, (int)(def_kama_slow * (1 - percent)));
+            config->kama_slow_max = fmin(40, (int)(def_kama_slow * (1 + percent)));
+            
+            int def_adx_len = ADX_LENGTH_1D;
+            int def_adx_smooth = ADX_SMOOTHING_1D;
+            float def_adx_thresh = ADX_THRESHOLD_1D;
+            int def_adx_pct = ADX_PCT_LENGTH_1D;
+            config->adx_length_min = fmax(10, (int)(def_adx_len * (1 - percent)));
+            config->adx_length_max = fmin(20, (int)(def_adx_len * (1 + percent)));
+            config->adx_smooth_min = fmax(10, (int)(def_adx_smooth * (1 - percent)));
+            config->adx_smooth_max = fmin(20, (int)(def_adx_smooth * (1 + percent)));
+            config->adx_threshold_min = fmax(20.0f, def_adx_thresh * (1 - percent));
+            config->adx_threshold_max = fmin(35.0f, def_adx_thresh * (1 + percent));
+            config->adx_pct_length_min = fmax(50, (int)(def_adx_pct * (1 - percent)));
+            config->adx_pct_length_max = fmin(100, (int)(def_adx_pct * (1 + percent)));
+            
+            int def_atr = ATR_LENGTH_1D;
+            float def_trail = TRAIL_STOP_ATR_MULT_1D;
+            config->atr_length_min = fmax(10, (int)(def_atr * (1 - percent)));
+            config->atr_length_max = fmin(20, (int)(def_atr * (1 + percent)));
+            config->trail_atr_mult_min = fmax(1.5f, def_trail * (1 - percent));
+            config->trail_atr_mult_max = fmin(2.5f, def_trail * (1 + percent));
         #else
-            fprintf(stderr, "⚠️  Warning: Fixed range mode not implemented. Enable USE_PERCENT_RANGE_1D in config_1d.h\n");
+            fprintf(stderr, "⚠️  Error: USE_PERCENT_RANGE_1D not defined\n");
             exit(1);
         #endif
     }
@@ -538,12 +534,12 @@ int load_csv(const char* filename, float** closes, float** highs, float** lows, 
 // Load OpenCL kernel from file
 char* load_kernel_source(const char* strategy_dir) {
     char kernel_path[512];
-    snprintf(kernel_path, sizeof(kernel_path), "strategies/%s/kernel.cl", strategy_dir);
+    snprintf(kernel_path, sizeof(kernel_path), "kernel.cl");
     
     FILE* file = fopen(kernel_path, "r");
     if (!file) {
         fprintf(stderr, "❌ Error: Could not open kernel file: %s\n", kernel_path);
-        fprintf(stderr, "   Make sure the strategy directory exists with kernel.cl\n");
+        fprintf(stderr, "   Make sure kernel.cl exists in the strategy directory\n");
         exit(1);
     }
     

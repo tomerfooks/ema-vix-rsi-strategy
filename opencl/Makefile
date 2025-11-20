@@ -5,18 +5,18 @@ CFLAGS = -O3 -Wall
 LDFLAGS = -framework OpenCL
 
 TARGET = optimize
-SRC = optimize.c
 
 # Default strategy (can be overridden: make STRATEGY=adaptive_ema_v2)
 STRATEGY ?= adaptive_ema_v1
 
-# Add strategy-specific defines
+# Strategy-specific source files
 ifeq ($(STRATEGY),adaptive_ema_v2)
-CFLAGS += -DUSE_STRATEGY_V2
+SRC = strategies/adaptive_ema_v2/optimize.c
+STRATEGY_DIR = strategies/adaptive_ema_v2
+else
+SRC = strategies/adaptive_ema_v1/optimize.c
+STRATEGY_DIR = strategies/adaptive_ema_v1
 endif
-
-# Add strategy name to compiler flags
-CFLAGS += -DSTRATEGY_NAME=\"$(STRATEGY)\"
 
 .PHONY: all clean run-goog run-qqq run-spy
 
@@ -24,7 +24,7 @@ all: $(TARGET)
 
 $(TARGET): $(SRC)
 	@echo "🔨 Compiling OpenCL optimizer with strategy: $(STRATEGY)..."
-	@$(CC) $(CFLAGS) $(LDFLAGS) $(SRC) -o $(TARGET)
+	@cd $(STRATEGY_DIR) && $(CC) $(CFLAGS) $(LDFLAGS) -I. optimize.c -o ../../$(TARGET)
 	@echo "✅ Build complete: $(TARGET) [$(STRATEGY)]"
 
 clean:
