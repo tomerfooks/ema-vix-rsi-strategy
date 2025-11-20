@@ -13,12 +13,16 @@ from datetime import datetime, timedelta
 def fetch_data(ticker, interval, num_candles):
     """Fetch historical data and save to CSV"""
     
+    # Add warmup period buffer (50 candles needed for indicators)
+    WARMUP_PERIOD = 50
+    num_candles_with_warmup = num_candles + WARMUP_PERIOD
+    
     # Map intervals to yfinance format and calculate period
     # yfinance limits: 1h = 730 days max, 1d = no limit, 4h via 1h data
     interval_map = {
-        '1h': ('1h', num_candles / 24, 730, 3500),    # (yf_interval, days_calc, max_days, max_candles)
-        '4h': ('1h', num_candles / 6, 730, 875),      # 4h from 1h data, ~875 4h candles max
-        '1d': ('1d', num_candles, 18250, 18250)       # ~50 years, effectively unlimited
+        '1h': ('1h', num_candles_with_warmup / 24, 730, 3500),    # (yf_interval, days_calc, max_days, max_candles)
+        '4h': ('1h', num_candles_with_warmup / 6, 730, 875),      # 4h from 1h data, ~875 4h candles max
+        '1d': ('1d', num_candles_with_warmup, 18250, 18250)       # ~50 years, effectively unlimited
     }
     
     if interval not in interval_map:
@@ -33,7 +37,7 @@ def fetch_data(ticker, interval, num_candles):
     if interval in ['1h', '4h']:
         print(f"📡 Fetching {ticker} data...")
         print(f"   Interval: {interval}")
-        print(f"   Requested: {num_candles} candles")
+        print(f"   Requested: {num_candles} candles (+{WARMUP_PERIOD} warmup)")
         print(f"   Fetching maximum available period (730 days)...")
         days_needed = max_days
     else:
@@ -41,7 +45,7 @@ def fetch_data(ticker, interval, num_candles):
         days_needed = int(min(days_needed * 1.5, max_days)) + 10
         print(f"📡 Fetching {ticker} data...")
         print(f"   Interval: {interval}")
-        print(f"   Candles requested: {num_candles}")
+        print(f"   Candles requested: {num_candles} (+{WARMUP_PERIOD} warmup)")
     
     try:
         # Fetch data
@@ -65,11 +69,11 @@ def fetch_data(ticker, interval, num_candles):
                 'Volume': 'sum'
             }).dropna()
         
-        # Limit to requested number of candles
-        df = df.tail(num_candles)
+        # Limit to requested number of candles (including warmup)
+        df = df.tail(num_candles_with_warmup)
         
         # Warn if we got fewer candles than requested
-        if len(df) < num_candles and interval in ['1h', '4h']:
+        if len(df) < num_candles_with_warmup and interval in ['1h', '4h']:
             print(f"   ⚠️  Only {len(df)} candles available (yfinance 730-day limit)")
             print(f"   Maximum for {interval}: ~{max_candles} candles")
         

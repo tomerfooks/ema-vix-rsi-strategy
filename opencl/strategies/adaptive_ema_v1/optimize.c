@@ -57,7 +57,6 @@ void load_config(const char* interval, Config* config) {
     
     if (strcmp(interval, "1h") == 0) {
         #ifdef USE_PERCENT_RANGE_1H
-            float percent = SEARCH_PERCENT_1H;
             int default_fast_low = FAST_LOW_1H;
             int default_slow_low = SLOW_LOW_1H;
             int default_fast_med = FAST_MED_1H;
@@ -69,33 +68,32 @@ void load_config(const char* interval, Config* config) {
             int default_low_pct = LOW_VOL_PCT_1H;
             int default_high_pct = HIGH_VOL_PCT_1H;
             
-            config->fast_length_low_min = (int)(default_fast_low * (1 - percent));
-            config->fast_length_low_max = (int)(default_fast_low * (1 + percent));
-            config->slow_length_low_min = (int)(default_slow_low * (1 - percent));
-            config->slow_length_low_max = (int)(default_slow_low * (1 + percent));
-            config->fast_length_med_min = (int)(default_fast_med * (1 - percent));
-            config->fast_length_med_max = (int)(default_fast_med * (1 + percent));
-            config->slow_length_med_min = (int)(default_slow_med * (1 - percent));
-            config->slow_length_med_max = (int)(default_slow_med * (1 + percent));
-            config->fast_length_high_min = (int)(default_fast_high * (1 - percent));
-            config->fast_length_high_max = (int)(default_fast_high * (1 + percent));
-            config->slow_length_high_min = (int)(default_slow_high * (1 - percent));
-            config->slow_length_high_max = (int)(default_slow_high * (1 + percent));
-            config->atr_length_min = (int)(default_atr * (1 - percent));
-            config->atr_length_max = (int)(default_atr * (1 + percent));
-            config->volatility_length_min = (int)(default_vol * (1 - percent));
-            config->volatility_length_max = (int)(default_vol * (1 + percent));
-            config->low_vol_percentile_min = (int)(default_low_pct * (1 - percent));
-            config->low_vol_percentile_max = (int)(default_low_pct * (1 + percent));
-            config->high_vol_percentile_min = (int)(default_high_pct * (1 - percent));
-            config->high_vol_percentile_max = (int)(default_high_pct * (1 + percent));
+            config->fast_length_low_min = (int)(default_fast_low * (1 - SEARCH_PERCENT_FAST_LOW_1H));
+            config->fast_length_low_max = (int)(default_fast_low * (1 + SEARCH_PERCENT_FAST_LOW_1H));
+            config->slow_length_low_min = (int)(default_slow_low * (1 - SEARCH_PERCENT_SLOW_LOW_1H));
+            config->slow_length_low_max = (int)(default_slow_low * (1 + SEARCH_PERCENT_SLOW_LOW_1H));
+            config->fast_length_med_min = (int)(default_fast_med * (1 - SEARCH_PERCENT_FAST_MED_1H));
+            config->fast_length_med_max = (int)(default_fast_med * (1 + SEARCH_PERCENT_FAST_MED_1H));
+            config->slow_length_med_min = (int)(default_slow_med * (1 - SEARCH_PERCENT_SLOW_MED_1H));
+            config->slow_length_med_max = (int)(default_slow_med * (1 + SEARCH_PERCENT_SLOW_MED_1H));
+            config->fast_length_high_min = (int)(default_fast_high * (1 - SEARCH_PERCENT_FAST_HIGH_1H));
+            config->fast_length_high_max = (int)(default_fast_high * (1 + SEARCH_PERCENT_FAST_HIGH_1H));
+            config->slow_length_high_min = (int)(default_slow_high * (1 - SEARCH_PERCENT_SLOW_HIGH_1H));
+            config->slow_length_high_max = (int)(default_slow_high * (1 + SEARCH_PERCENT_SLOW_HIGH_1H));
+            config->atr_length_min = (int)(default_atr * (1 - SEARCH_PERCENT_ATR_1H));
+            config->atr_length_max = (int)(default_atr * (1 + SEARCH_PERCENT_ATR_1H));
+            config->volatility_length_min = (int)(default_vol * (1 - SEARCH_PERCENT_VOL_1H));
+            config->volatility_length_max = (int)(default_vol * (1 + SEARCH_PERCENT_VOL_1H));
+            config->low_vol_percentile_min = (int)(default_low_pct * (1 - SEARCH_PERCENT_LOW_PCT_1H));
+            config->low_vol_percentile_max = (int)(default_low_pct * (1 + SEARCH_PERCENT_LOW_PCT_1H));
+            config->high_vol_percentile_min = (int)(default_high_pct * (1 - SEARCH_PERCENT_HIGH_PCT_1H));
+            config->high_vol_percentile_max = (int)(default_high_pct * (1 + SEARCH_PERCENT_HIGH_PCT_1H));
         #else
             fprintf(stderr, "⚠️  Warning: Fixed range mode not implemented. Enable USE_PERCENT_RANGE_1H in config_1h.h\n");
             exit(1);
         #endif
     } else if (strcmp(interval, "4h") == 0) {
         #ifdef USE_PERCENT_RANGE_4H
-            float percent = SEARCH_PERCENT_4H;
             int default_fast_low = FAST_LOW_4H;
             int default_slow_low = SLOW_LOW_4H;
             int default_fast_med = FAST_MED_4H;
@@ -107,33 +105,32 @@ void load_config(const char* interval, Config* config) {
             int default_low_pct = LOW_VOL_PCT_4H;
             int default_high_pct = HIGH_VOL_PCT_4H;
             
-            config->fast_length_low_min = (int)(default_fast_low * (1 - percent));
-            config->fast_length_low_max = (int)(default_fast_low * (1 + percent));
-            config->slow_length_low_min = (int)(default_slow_low * (1 - percent));
-            config->slow_length_low_max = (int)(default_slow_low * (1 + percent));
-            config->fast_length_med_min = (int)(default_fast_med * (1 - percent));
-            config->fast_length_med_max = (int)(default_fast_med * (1 + percent));
-            config->slow_length_med_min = (int)(default_slow_med * (1 - percent));
-            config->slow_length_med_max = (int)(default_slow_med * (1 + percent));
-            config->fast_length_high_min = (int)(default_fast_high * (1 - percent));
-            config->fast_length_high_max = (int)(default_fast_high * (1 + percent));
-            config->slow_length_high_min = (int)(default_slow_high * (1 - percent));
-            config->slow_length_high_max = (int)(default_slow_high * (1 + percent));
-            config->atr_length_min = (int)(default_atr * (1 - percent));
-            config->atr_length_max = (int)(default_atr * (1 + percent));
-            config->volatility_length_min = (int)(default_vol * (1 - percent));
-            config->volatility_length_max = (int)(default_vol * (1 + percent));
-            config->low_vol_percentile_min = (int)(default_low_pct * (1 - percent));
-            config->low_vol_percentile_max = (int)(default_low_pct * (1 + percent));
-            config->high_vol_percentile_min = (int)(default_high_pct * (1 - percent));
-            config->high_vol_percentile_max = (int)(default_high_pct * (1 + percent));
+            config->fast_length_low_min = (int)(default_fast_low * (1 - SEARCH_PERCENT_FAST_LOW_4H));
+            config->fast_length_low_max = (int)(default_fast_low * (1 + SEARCH_PERCENT_FAST_LOW_4H));
+            config->slow_length_low_min = (int)(default_slow_low * (1 - SEARCH_PERCENT_SLOW_LOW_4H));
+            config->slow_length_low_max = (int)(default_slow_low * (1 + SEARCH_PERCENT_SLOW_LOW_4H));
+            config->fast_length_med_min = (int)(default_fast_med * (1 - SEARCH_PERCENT_FAST_MED_4H));
+            config->fast_length_med_max = (int)(default_fast_med * (1 + SEARCH_PERCENT_FAST_MED_4H));
+            config->slow_length_med_min = (int)(default_slow_med * (1 - SEARCH_PERCENT_SLOW_MED_4H));
+            config->slow_length_med_max = (int)(default_slow_med * (1 + SEARCH_PERCENT_SLOW_MED_4H));
+            config->fast_length_high_min = (int)(default_fast_high * (1 - SEARCH_PERCENT_FAST_HIGH_4H));
+            config->fast_length_high_max = (int)(default_fast_high * (1 + SEARCH_PERCENT_FAST_HIGH_4H));
+            config->slow_length_high_min = (int)(default_slow_high * (1 - SEARCH_PERCENT_SLOW_HIGH_4H));
+            config->slow_length_high_max = (int)(default_slow_high * (1 + SEARCH_PERCENT_SLOW_HIGH_4H));
+            config->atr_length_min = (int)(default_atr * (1 - SEARCH_PERCENT_ATR_4H));
+            config->atr_length_max = (int)(default_atr * (1 + SEARCH_PERCENT_ATR_4H));
+            config->volatility_length_min = (int)(default_vol * (1 - SEARCH_PERCENT_VOL_4H));
+            config->volatility_length_max = (int)(default_vol * (1 + SEARCH_PERCENT_VOL_4H));
+            config->low_vol_percentile_min = (int)(default_low_pct * (1 - SEARCH_PERCENT_LOW_PCT_4H));
+            config->low_vol_percentile_max = (int)(default_low_pct * (1 + SEARCH_PERCENT_LOW_PCT_4H));
+            config->high_vol_percentile_min = (int)(default_high_pct * (1 - SEARCH_PERCENT_HIGH_PCT_4H));
+            config->high_vol_percentile_max = (int)(default_high_pct * (1 + SEARCH_PERCENT_HIGH_PCT_4H));
         #else
             fprintf(stderr, "⚠️  Warning: Fixed range mode not implemented. Enable USE_PERCENT_RANGE_4H in config_4h.h\n");
             exit(1);
         #endif
     } else { // 1d
         #ifdef USE_PERCENT_RANGE_1D
-            float percent = SEARCH_PERCENT_1D;
             int default_fast_low = FAST_LOW_1D;
             int default_slow_low = SLOW_LOW_1D;
             int default_fast_med = FAST_MED_1D;
@@ -145,26 +142,26 @@ void load_config(const char* interval, Config* config) {
             int default_low_pct = LOW_VOL_PCT_1D;
             int default_high_pct = HIGH_VOL_PCT_1D;
             
-            config->fast_length_low_min = (int)(default_fast_low * (1 - percent));
-            config->fast_length_low_max = (int)(default_fast_low * (1 + percent));
-            config->slow_length_low_min = (int)(default_slow_low * (1 - percent));
-            config->slow_length_low_max = (int)(default_slow_low * (1 + percent));
-            config->fast_length_med_min = (int)(default_fast_med * (1 - percent));
-            config->fast_length_med_max = (int)(default_fast_med * (1 + percent));
-            config->slow_length_med_min = (int)(default_slow_med * (1 - percent));
-            config->slow_length_med_max = (int)(default_slow_med * (1 + percent));
-            config->fast_length_high_min = (int)(default_fast_high * (1 - percent));
-            config->fast_length_high_max = (int)(default_fast_high * (1 + percent));
-            config->slow_length_high_min = (int)(default_slow_high * (1 - percent));
-            config->slow_length_high_max = (int)(default_slow_high * (1 + percent));
-            config->atr_length_min = (int)(default_atr * (1 - percent));
-            config->atr_length_max = (int)(default_atr * (1 + percent));
-            config->volatility_length_min = (int)(default_vol * (1 - percent));
-            config->volatility_length_max = (int)(default_vol * (1 + percent));
-            config->low_vol_percentile_min = (int)(default_low_pct * (1 - percent));
-            config->low_vol_percentile_max = (int)(default_low_pct * (1 + percent));
-            config->high_vol_percentile_min = (int)(default_high_pct * (1 - percent));
-            config->high_vol_percentile_max = (int)(default_high_pct * (1 + percent));
+            config->fast_length_low_min = (int)(default_fast_low * (1 - SEARCH_PERCENT_FAST_LOW_1D));
+            config->fast_length_low_max = (int)(default_fast_low * (1 + SEARCH_PERCENT_FAST_LOW_1D));
+            config->slow_length_low_min = (int)(default_slow_low * (1 - SEARCH_PERCENT_SLOW_LOW_1D));
+            config->slow_length_low_max = (int)(default_slow_low * (1 + SEARCH_PERCENT_SLOW_LOW_1D));
+            config->fast_length_med_min = (int)(default_fast_med * (1 - SEARCH_PERCENT_FAST_MED_1D));
+            config->fast_length_med_max = (int)(default_fast_med * (1 + SEARCH_PERCENT_FAST_MED_1D));
+            config->slow_length_med_min = (int)(default_slow_med * (1 - SEARCH_PERCENT_SLOW_MED_1D));
+            config->slow_length_med_max = (int)(default_slow_med * (1 + SEARCH_PERCENT_SLOW_MED_1D));
+            config->fast_length_high_min = (int)(default_fast_high * (1 - SEARCH_PERCENT_FAST_HIGH_1D));
+            config->fast_length_high_max = (int)(default_fast_high * (1 + SEARCH_PERCENT_FAST_HIGH_1D));
+            config->slow_length_high_min = (int)(default_slow_high * (1 - SEARCH_PERCENT_SLOW_HIGH_1D));
+            config->slow_length_high_max = (int)(default_slow_high * (1 + SEARCH_PERCENT_SLOW_HIGH_1D));
+            config->atr_length_min = (int)(default_atr * (1 - SEARCH_PERCENT_ATR_1D));
+            config->atr_length_max = (int)(default_atr * (1 + SEARCH_PERCENT_ATR_1D));
+            config->volatility_length_min = (int)(default_vol * (1 - SEARCH_PERCENT_VOL_1D));
+            config->volatility_length_max = (int)(default_vol * (1 + SEARCH_PERCENT_VOL_1D));
+            config->low_vol_percentile_min = (int)(default_low_pct * (1 - SEARCH_PERCENT_LOW_PCT_1D));
+            config->low_vol_percentile_max = (int)(default_low_pct * (1 + SEARCH_PERCENT_LOW_PCT_1D));
+            config->high_vol_percentile_min = (int)(default_high_pct * (1 - SEARCH_PERCENT_HIGH_PCT_1D));
+            config->high_vol_percentile_max = (int)(default_high_pct * (1 + SEARCH_PERCENT_HIGH_PCT_1D));
         #else
             fprintf(stderr, "⚠️  Warning: Fixed range mode not implemented. Enable USE_PERCENT_RANGE_1D in config_1d.h\n");
             exit(1);
@@ -184,9 +181,14 @@ void export_results_to_json(const char* ticker, const char* interval, const char
     char timestamp_str[32];
     strftime(timestamp_str, sizeof(timestamp_str), "%Y%m%d_%H%M%S", tm_info);
     
-    // Create results directory if it doesn't exist (with interval subfolder)
+    // Convert ticker to lowercase for directory structure
+    char ticker_lower[64];
+    strcpy(ticker_lower, ticker);
+    for (char* p = ticker_lower; *p; p++) *p = tolower(*p);
+    
+    // Create results directory if it doesn't exist (with symbol and interval subfolders)
     char results_dir[256];
-    snprintf(results_dir, sizeof(results_dir), "strategies/%s/results/%s", strategy, interval);
+    snprintf(results_dir, sizeof(results_dir), "strategies/%s/results/%s/%s", strategy, ticker_lower, interval);
     char mkdir_cmd[512];
     snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p %s", results_dir);
     system(mkdir_cmd);
@@ -528,12 +530,12 @@ int load_csv(const char* filename, float** closes, float** highs, float** lows, 
 // Load OpenCL kernel from file
 char* load_kernel_source(const char* strategy_dir) {
     char kernel_path[512];
-    snprintf(kernel_path, sizeof(kernel_path), "kernel.cl");
+    snprintf(kernel_path, sizeof(kernel_path), "strategies/%s/kernel.cl", strategy_dir);
     
     FILE* file = fopen(kernel_path, "r");
     if (!file) {
         fprintf(stderr, "❌ Error: Could not open kernel file: %s\n", kernel_path);
-        fprintf(stderr, "   Make sure kernel.cl exists in the strategy directory\n");
+        fprintf(stderr, "   Make sure the strategy directory exists with kernel.cl\n");
         exit(1);
     }
     

@@ -29,7 +29,18 @@
 
 // Use percentage-based range for optimization
 #define USE_PERCENT_RANGE_4H
-#define SEARCH_PERCENT_4H 0.05  // ±5% from defaults
+
+// Individual search percentages for each parameter
+#define SEARCH_PERCENT_FAST_LOW_4H 0.05     // ±5% from FAST_LOW_4H
+#define SEARCH_PERCENT_SLOW_LOW_4H 0.05     // ±5% from SLOW_LOW_4H
+#define SEARCH_PERCENT_FAST_MED_4H 0.05     // ±5% from FAST_MED_4H
+#define SEARCH_PERCENT_SLOW_MED_4H 0.05     // ±5% from SLOW_MED_4H
+#define SEARCH_PERCENT_FAST_HIGH_4H 0.05    // ±5% from FAST_HIGH_4H
+#define SEARCH_PERCENT_SLOW_HIGH_4H 0.05    // ±5% from SLOW_HIGH_4H
+#define SEARCH_PERCENT_ATR_4H 0.05          // ±5% from ATR_LENGTH_4H
+#define SEARCH_PERCENT_VOL_4H 0.05          // ±5% from VOL_LENGTH_4H
+#define SEARCH_PERCENT_LOW_PCT_4H 0.05      // ±5% from LOW_VOL_PCT_4H
+#define SEARCH_PERCENT_HIGH_PCT_4H 0.05     // ±5% from HIGH_VOL_PCT_4H
 
 // Strategy Settings
 #define INITIAL_CAPITAL_4H 10000.0f

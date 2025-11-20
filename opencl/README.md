@@ -16,7 +16,7 @@ Compatible with: AMD Radeon, Intel GPUs, NVIDIA, Apple Silicon (M1/M2/M3)
 
 **Examples:**
 ```bash
-./run.sh QQQ 1h          # 1-hour, 300 candles (default)
+./run.sh QQQ 1h          # 1-hour, 500 candles (default)
 ./run.sh AAPL 4h         # 4-hour, 270 candles (default)
 ./run.sh SPY 1d          # Daily, 150 candles (default)
 ./run.sh GOOG 1h 500     # 1-hour, custom 500 candles
@@ -35,16 +35,16 @@ The script automatically:
 ```
 opencl/
 ├── run.sh                  # Automated workflow script
-├── optimize.c              # Main optimizer (**EDIT PARAMS HERE**)
 ├── fetch_data.py           # Data fetcher (Yahoo Finance)
 ├── Makefile                # Build configuration
 ├── data/                   # Downloaded market data (CSV)
-└── strategies/             # Strategy modules (future use)
+└── strategies/             # Strategy modules
     └── adaptive_ema_v1/
         ├── config_1h.h     # 1-hour parameter definitions
         ├── config_4h.h     # 4-hour parameter definitions
         ├── config_1d.h     # Daily parameter definitions
-        └── kernel.cl       # OpenCL GPU kernel
+        ├── kernel.cl       # OpenCL GPU kernel
+        └── optimize.c      # Main optimizer
 ```
 
 ---
@@ -87,16 +87,16 @@ max_fast_low = 13 * (1 + 0.05) = 13.65 → 13
 
 #### 1. Open the optimizer file
 ```bash
-nano optimize.c
+nano strategies/adaptive_ema_v1/optimize.c
 # Or use your preferred editor: vim, code, etc.
 ```
 
 #### 2. Navigate to your timeframe section
 
 **Parameter locations:**
-- **1h interval**: Lines 53-90
-- **4h interval**: Lines 91-128  
-- **1d interval**: Lines 129-166
+- **1h interval**: Lines ~50-90
+- **4h interval**: Lines ~90-130  
+- **1d interval**: Lines ~130-170
 
 #### 3. Modify default values (centers of search ranges)
 
@@ -140,38 +140,6 @@ float percent = 0.08;  // Very wide: ±8% → 100M+ tests, may crash
 
 ```bash
 ./run.sh QQQ 1h   # Auto-compiles and runs with new parameters
-```
-
-### Example: Iterative Parameter Tuning
-
-**Iteration 1 - Exploration:**
-```c
-int default_fast_low = 15;
-float percent = 0.08;  // Wide search
-```
-```bash
-./run.sh QQQ 1h
-# Result: Best fast_low = 12, Return: 2.1%, Calmar: 0.45
-```
-
-**Iteration 2 - Refinement:**
-```c
-int default_fast_low = 12;  // Use best from iteration 1
-float percent = 0.03;       // Narrow search around winner
-```
-```bash
-./run.sh QQQ 1h
-# Result: Best fast_low = 11, Return: 2.4%, Calmar: 0.52
-```
-
-**Iteration 3 - Validation:**
-```c
-int default_fast_low = 11;  // Use refined best
-float percent = 0.01;       // Very narrow final search
-```
-```bash
-./run.sh SPY 1h    # Test on different ticker
-./run.sh QQQ 4h    # Test on different timeframe
 ```
 
 ---

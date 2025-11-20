@@ -13,6 +13,15 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.nbc
+*.nbi
+
+# C/OpenCL Build Artifacts
+opencl/optimize
+opencl/optimize_opencl
+opencl/list_devices
+*.o
+*.out
 
 # Environment
 .env

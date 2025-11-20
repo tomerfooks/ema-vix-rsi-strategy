@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RGTI 1h - adaptive_ema_v1 Results</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e17; color: #e4e4e7; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; margin-bottom: 10px; color: #60a5fa; }
+    h2 { font-size: 1.5rem; margin: 30px 0 15px; color: #a78bfa; border-bottom: 2px solid #374151; padding-bottom: 10px; }
+    .meta { color: #9ca3af; margin-bottom: 30px; font-size: 0.95rem; }
+    .meta span { margin-right: 20px; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .metric-card { background: #1e293b; padding: 20px; border-radius: 8px; border-left: 4px solid #60a5fa; }
+    .metric-label { font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-value { font-size: 1.8rem; font-weight: 700; margin-top: 8px; }
+    .positive { color: #34d399; }
+    .negative { color: #f87171; }
+    .neutral { color: #60a5fa; }
+    .chart-container { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .params { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .param-item { padding: 10px; background: #0f172a; border-radius: 4px; }
+    .param-name { font-size: 0.8rem; color: #9ca3af; }
+    .param-value { font-size: 1.1rem; font-weight: 600; color: #e4e4e7; margin-top: 4px; }
+    .trades-table { width: 100%; background: #1e293b; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #0f172a; padding: 12px; text-align: left; font-weight: 600; color: #a78bfa; font-size: 0.85rem; text-transform: uppercase; }
+    td { padding: 12px; border-top: 1px solid #374151; }
+    tr:hover { background: #0f172a; }
+    .buy { color: #34d399; font-weight: 600; }
+    .sell { color: #f87171; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>RGTI 1h Strategy Results</h1>
+    <div class="meta">
+      <span><strong>Strategy:</strong> adaptive_ema_v1</span>
+      <span><strong>Generated:</strong> 20251120_050512</span>
+      <span><strong>Data:</strong> <a href="../../../data/rgti_1h.csv" style="color: #60a5fa;">../../../data/rgti_1h.csv</a></span>
+    </div>
+
+    <h2>Performance Metrics</h2>
+    <div id="metrics" class="metrics"></div>
+
+    <h2>Price Chart with Trades</h2>
+    <div class="chart-container">
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <h2>Optimized Parameters</h2>
+    <div id="parameters" class="params"></div>
+
+    <h2>Trade Log</h2>
+    <div class="trades-table">
+      <table id="tradesTable"></table>
+    </div>
+  </div>
+
+  <script>
+    const embeddedData = {
+  "ticker": "RGTI",
+  "interval": "1h",
+  "strategy": "adaptive_ema_v1",
+  "timestamp": "20251120_050512",
+  "candles": 550,
+  "performance": {
+    "total_return": 183.21,
+    "max_drawdown": 24.34,
+    "calmar_ratio": 20.00,
+    "total_trades": 75,
+    "buy_hold_return": 68.17,
+    "outperformance": 115.04
+  },
+  "parameters": {
+    "fast_low": 6,
+    "slow_low": 79,
+    "fast_med": 18,
+    "slow_med": 85,
+    "fast_high": 43,
+    "slow_high": 113,
+    "atr_length": 12,
+    "volatility_length": 68,
+    "low_vol_percentile": 15,
+    "high_vol_percentile": 64
+  },
+  "trades": [
+    {
+      "trade_number": 1,
+      "action": "BUY",
+      "price": 17.92,
+      "date": "2025-08-13 21:30:00",
+      "candle_index": 65
+    },
+    {
+      "trade_number": 2,
+      "action": "SELL",
+      "price": 15.10,
+      "date": "2025-08-19 21:30:00",
+      "candle_index": 93,
+      "pnl_percent": -15.74
+    },
+    {
+      "trade_number": 3,
+      "action": "BUY",
+      "price": 14.11,
+      "date": "2025-08-20 16:30:00",
+      "candle_index": 95
+    },
+    {
+      "trade_number": 4,
+      "action": "SELL",
+      "price": 14.85,
+      "date": "2025-08-20 19:30:00",
+      "candle_index": 98,
+      "pnl_percent": 5.21
+    },
+    {
+      "trade_number": 5,
+      "action": "BUY",
+      "price": 16.23,
+      "date": "2025-08-29 19:30:00",
+      "candle_index": 147
+    },
+    {
+      "trade_number": 6,
+      "action": "SELL",
+      "price": 15.56,
+      "date": "2025-09-03 19:30:00",
+      "candle_index": 161,
+      "pnl_percent": -4.16
+    },
+    {
+      "trade_number": 7,
+      "action": "BUY",
+      "price": 15.40,
+      "date": "2025-09-09 18:30:00",
+      "candle_index": 188
+    },
+    {
+      "trade_number": 8,
+      "action": "SELL",
+      "price": 15.62,
+      "date": "2025-09-09 19:30:00",
+      "candle_index": 189,
+      "pnl_percent": 1.41
+    },
+    {
+      "trade_number": 9,
+      "action": "BUY",
+      "price": 16.23,
+      "date": "2025-09-10 18:30:00",
+      "candle_index": 195
+    },
+    {
+      "trade_number": 10,
+      "action": "SELL",
+      "price": 46.37,
+      "date": "2025-10-17 22:30:00",
+      "candle_index": 388,
+      "pnl_percent": 185.79
+    },
+    {
+      "trade_number": 11,
+      "action": "BUY",
+      "price": 46.03,
+      "date": "2025-10-20 16:30:00",
+      "candle_index": 389
+    },
+    {
+      "trade_number": 12,
+      "action": "SELL",
+      "price": 47.01,
+      "date": "2025-10-20 17:30:00",
+      "candle_index": 390,
+      "pnl_percent": 2.12
+    },
+    {
+      "trade_number": 13,
+      "action": "BUY",
+      "price": 42.46,
+      "date": "2025-10-30 21:30:00",
+      "candle_index": 451
+    },
+    {
+      "trade_number": 14,
+      "action": "SELL",
+      "price": 42.77,
+      "date": "2025-10-31 15:30:00",
+      "candle_index": 452,
+      "pnl_percent": 0.73
+    },
+    {
+      "trade_number": 15,
+      "action": "BUY",
+      "price": 42.44,
+      "date": "2025-10-31 16:30:00",
+      "candle_index": 453
+    },
+    {
+      "trade_number": 16,
+      "action": "SELL",
+      "price": 43.78,
+      "date": "2025-10-31 19:30:00",
+      "candle_index": 456,
+      "pnl_percent": 3.15
+    },
+    {
+      "trade_number": 17,
+      "action": "BUY",
+      "price": 44.24,
+      "date": "2025-10-31 20:30:00",
+      "candle_index": 457
+    },
+    {
+      "trade_number": 18,
+      "action": "SELL",
+      "price": 39.31,
+      "date": "2025-11-03 16:30:00",
+      "candle_index": 459,
+      "pnl_percent": -11.13
+    },
+    {
+      "trade_number": 19,
+      "action": "BUY",
+      "price": 40.76,
+      "date": "2025-11-03 20:30:00",
+      "candle_index": 463
+    },
+    {
+      "trade_number": 20,
+      "action": "SELL",
+      "price": 40.08,
+      "date": "2025-11-03 21:30:00",
+      "candle_index": 464,
+      "pnl_percent": -1.68
+    }
+  ]
+}
+;
+    
+    async function loadResults() {
+      const data = embeddedData;
+
+      const metricsDiv = document.getElementById('metrics');
+      const metrics = [
+        { label: 'Total Return', value: data.performance.total_return, suffix: '%', colorClass: data.performance.total_return > 0 ? 'positive' : 'negative' },
+        { label: 'Max Drawdown', value: data.performance.max_drawdown, suffix: '%', colorClass: 'negative' },
+        { label: 'Calmar Ratio', value: data.performance.calmar_ratio, suffix: '', colorClass: 'neutral' },
+        { label: 'Total Trades', value: data.performance.total_trades, suffix: '', colorClass: 'neutral' },
+        { label: 'Buy & Hold', value: data.performance.buy_hold_return, suffix: '%', colorClass: data.performance.buy_hold_return > 0 ? 'positive' : 'negative' },
+        { label: 'Outperformance', value: data.performance.outperformance, suffix: '%', colorClass: data.performance.outperformance > 0 ? 'positive' : 'negative' }
+      ];
+      metricsDiv.innerHTML = metrics.map(m => `<div class="metric-card"><div class="metric-label">${m.label}</div><div class="metric-value ${m.colorClass}">${m.value.toFixed(2)}${m.suffix}</div></div>`).join('');
+
+      const paramsDiv = document.getElementById('parameters');
+      const params = Object.entries(data.parameters).map(([key, value]) => `<div class="param-item"><div class="param-name">${key.replace(/_/g, ' ')}</div><div class="param-value">${value}</div></div>`).join('');
+      paramsDiv.innerHTML = `<div class="param-grid">${params}</div>`;
+
+      const tradesTable = document.getElementById('tradesTable');
+      const tradesHTML = `<thead><tr><th>#</th><th>Action</th><th>Price</th><th>Date</th><th>P&L</th></tr></thead><tbody>${data.trades.map(t => `<tr><td>${t.trade_number}</td><td class="${t.action.toLowerCase()}">${t.action}</td><td>$${t.price.toFixed(2)}</td><td>${t.date}</td><td class="${t.pnl_percent ? (t.pnl_percent > 0 ? 'positive' : 'negative') : ''}">${t.pnl_percent ? (t.pnl_percent > 0 ? '+' : '') + t.pnl_percent.toFixed(2) + '%' : '-'}</td></tr>`).join('')}</tbody>`;
+      tradesTable.innerHTML = tradesHTML;
+
+      // Generate trade markers for the chart
+      const tradeMarkers = data.trades.map(t => ({
+        date: t.date.split(' ')[0],
+        price: t.price,
+        action: t.action
+      }));
+
+      // Create price chart using trade data
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: { 
+          labels: tradeMarkers.map(t => t.date), 
+          datasets: [
+            { 
+              label: 'Trade Prices', 
+              data: tradeMarkers.map(t => t.price), 
+              borderColor: '#60a5fa', 
+              backgroundColor: 'rgba(96, 165, 250, 0.1)', 
+              borderWidth: 2, 
+              pointRadius: 4,
+              pointBackgroundColor: tradeMarkers.map(t => t.action === 'BUY' ? '#34d399' : '#f87171'),
+              pointBorderColor: tradeMarkers.map(t => t.action === 'BUY' ? '#34d399' : '#f87171'),
+              tension: 0.1 
+            }
+          ] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: true, 
+          aspectRatio: 2.5, 
+          plugins: { 
+            legend: { labels: { color: '#e4e4e7' } }, 
+            tooltip: { 
+              mode: 'index', 
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  const trade = tradeMarkers[context.dataIndex];
+                  return `${trade.action}: $${trade.price.toFixed(2)}`;
+                }
+              }
+            } 
+          }, 
+          scales: { 
+            x: { 
+              ticks: { color: '#9ca3af', maxTicksLimit: 12 }, 
+              grid: { color: '#374151' } 
+            }, 
+            y: { 
+              ticks: { color: '#9ca3af' }, 
+              grid: { color: '#374151' } 
+            } 
+          } 
+        }
+      });
+    }
+    loadResults();
+  </script>
+</body>
+</html>

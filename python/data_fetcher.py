@@ -16,13 +16,17 @@ def fetch_data(ticker: str, target_candles: int = 1500, interval: str = '1h') ->
     
     Args:
         ticker: Stock symbol
-        target_candles: Number of candles to return
+        target_candles: Number of candles to return (warmup period will be added)
         interval: Candle interval ('1h', '4h', '1d')
     
     Returns:
         DataFrame with OHLCV data and DatetimeIndex, or None on error
     """
     try:
+        # Add warmup period buffer (50 candles needed for indicators)
+        WARMUP_PERIOD = 50
+        total_candles = target_candles + WARMUP_PERIOD
+        
         # Calculate period needed based on interval (with buffer for weekends/holidays)
         if interval == '1h':
             period = '300d'  # ~300 days for 1h data
@@ -61,9 +65,9 @@ def fetch_data(ticker: str, target_candles: int = 1500, interval: str = '1h') ->
         # Clean data: interpolate outliers using rolling median
         df = _clean_outliers(df)
         
-        # Limit to target number of candles (most recent)
-        if len(df) > target_candles:
-            df = df.iloc[-target_candles:]
+        # Limit to target number of candles + warmup (most recent)
+        if len(df) > total_candles:
+            df = df.iloc[-total_candles:]
         
         return df
         

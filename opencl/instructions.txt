@@ -55,12 +55,21 @@ will look like this:
    #7  BUY  @ $574.56 on 2025-09-04 07:00
    #8  SELL @ $608.40 on 2025-11-13 07:00 | P&L: +5.89%
    Total trades: 8
-
 ###
 
 
 Step 3: tweak/modify base default params, based on recommendation (relevant config file will be located in strategies/strategy/config_1d | #for example: strategies/adaptive_ema_v1/config_1d)
-you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization
+you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization.
+Also, always GO OVER THE TRADES LIST, AND PAY ATTENTION TO THE BIG LOSERS TRADES. JUST TO FIGURE OUT WHAT HAPPENED AND MANUALLY CHANGE DEFAULT PARAMETERS.
+
+
 Step 4: Run again
 
 Step 5: repeat the process around 10 times, until optimal results.
+
+
+___ Notes ___
+- You might get an error if the search range params is too wide, causing too many combinations: 
+#./run.sh: line 154:  3831 Segmentation fault: 11  ./optimize "$TICKER" "$INTERVAL" $NOSAVE_FLAG
+#❌ Optimization failed.
+in that case, you should adjust them and narrow them./

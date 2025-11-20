@@ -7,6 +7,10 @@ const yahooFinance = new YahooFinance();
  */
 async function fetchData(ticker, targetCandles = 300, interval = '1h') {
   try {
+    // Add warmup period buffer (50 candles needed for indicators)
+    const WARMUP_PERIOD = 50;
+    const totalCandles = targetCandles + WARMUP_PERIOD;
+    
     // Calculate days needed based on interval (with buffer for weekends/holidays)
     const daysNeeded = interval === '1h' ? 300 : (interval === '4h' ? 500 : 730);
     
@@ -70,8 +74,8 @@ async function fetchData(ticker, targetCandles = 300, interval = '1h') {
       cleanedCandles.push(candles[i]);
     }
     
-    // Limit to target number of candles (most recent)
-    return cleanedCandles.slice(-targetCandles);
+    // Limit to target number of candles + warmup (most recent)
+    return cleanedCandles.slice(-totalCandles);
   } catch (error) {
     console.error(`Error fetching data for ${ticker}:`, error.message);
     return null;
