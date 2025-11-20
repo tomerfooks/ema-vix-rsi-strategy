@@ -607,7 +607,6 @@ int main(int argc, char** argv) {
     printf("   Interval: %s\n", interval);
     printf("   Strategy: %s\n", STRATEGY_NAME);
     printf("   Tech: Apple Silicon / AMD Radeon + OpenCL\n");
-    printf("   Expected speedup: 100-500x faster than CPU\n\n");
     
     // Load OpenCL kernel from strategy directory
     printf("📦 Loading strategy kernel...\n");
@@ -645,8 +644,88 @@ int main(int argc, char** argv) {
     printf("   Candles: %d | Auto-detecting GPU...\n", num_candles);
     printf("============================================================\n\n");
     
-    // Generate parameter combinations
-    printf("⚡ Generating parameter combinations...\n");
+    // Calculate total combinations (fast approximation first)
+    printf("⚡ Calculating parameter space size...\n");
+    
+    // Calculate ranges for each parameter
+    int fl_range = config.fast_length_low_max - config.fast_length_low_min + 1;
+    int sl_range = config.slow_length_low_max - config.slow_length_low_min + 1;
+    int fm_range = config.fast_length_med_max - config.fast_length_med_min + 1;
+    int sm_range = config.slow_length_med_max - config.slow_length_med_min + 1;
+    int fh_range = config.fast_length_high_max - config.fast_length_high_min + 1;
+    int sh_range = config.slow_length_high_max - config.slow_length_high_min + 1;
+    int atr_range = config.atr_length_max - config.atr_length_min + 1;
+    int vol_range = config.volatility_length_max - config.volatility_length_min + 1;
+    int lp_range = config.low_vol_percentile_max - config.low_vol_percentile_min + 1;
+    int hp_range = config.high_vol_percentile_max - config.high_vol_percentile_min + 1;
+    
+    printf("   Parameter ranges:\n");
+    printf("     Fast Low: %d-%d (%d values)\n", config.fast_length_low_min, config.fast_length_low_max, fl_range);
+    printf("     Slow Low: %d-%d (%d values)\n", config.slow_length_low_min, config.slow_length_low_max, sl_range);
+    printf("     Fast Med: %d-%d (%d values)\n", config.fast_length_med_min, config.fast_length_med_max, fm_range);
+    printf("     Slow Med: %d-%d (%d values)\n", config.slow_length_med_min, config.slow_length_med_max, sm_range);
+    printf("     Fast High: %d-%d (%d values)\n", config.fast_length_high_min, config.fast_length_high_max, fh_range);
+    printf("     Slow High: %d-%d (%d values)\n", config.slow_length_high_min, config.slow_length_high_max, sh_range);
+    printf("     ATR Length: %d-%d (%d values)\n", config.atr_length_min, config.atr_length_max, atr_range);
+    printf("     Vol Length: %d-%d (%d values)\n", config.volatility_length_min, config.volatility_length_max, vol_range);
+    printf("     Low Vol %%: %d-%d (%d values)\n", config.low_vol_percentile_min, config.low_vol_percentile_max, lp_range);
+    printf("     High Vol %%: %d-%d (%d values)\n", config.high_vol_percentile_min, config.high_vol_percentile_max, hp_range);
+    
+    // Upper bound estimate (ignoring constraints)
+    long long max_possible = (long long)fl_range * sl_range * fm_range * sm_range * 
+                             fh_range * sh_range * atr_range * vol_range * lp_range * hp_range;
+    
+    printf("\n   Maximum possible combinations (ignoring constraints): %lld\n", max_possible);
+    
+    #define MAX_COMBINATIONS 15000000
+    
+    if (max_possible > MAX_COMBINATIONS) {
+        printf("\n");
+        printf("❌ ERROR: Parameter space is too large!\n");
+        printf("   Maximum combinations: %lld\n", max_possible);
+        printf("   Safety limit: %d (15 million)\n", MAX_COMBINATIONS);
+        printf("\n");
+        printf("💡 To fix this, reduce the search ranges in your config file:\n");
+        printf("   File: strategies/%s/config_%s.h\n", STRATEGY_NAME, interval);
+        printf("\n");
+        printf("   Current search percentages:\n");
+        if (strcmp(interval, "1h") == 0) {
+            #ifdef USE_PERCENT_RANGE_1H
+            printf("     SEARCH_PERCENT_FAST_LOW_1H = %.2f\n", SEARCH_PERCENT_FAST_LOW_1H);
+            printf("     SEARCH_PERCENT_SLOW_LOW_1H = %.2f\n", SEARCH_PERCENT_SLOW_LOW_1H);
+            printf("     (and 8 more parameters...)\n");
+            #endif
+        } else if (strcmp(interval, "4h") == 0) {
+            #ifdef USE_PERCENT_RANGE_4H
+            printf("     SEARCH_PERCENT_FAST_LOW_4H = %.2f\n", SEARCH_PERCENT_FAST_LOW_4H);
+            printf("     SEARCH_PERCENT_SLOW_LOW_4H = %.2f\n", SEARCH_PERCENT_SLOW_LOW_4H);
+            printf("     (and 8 more parameters...)\n");
+            #endif
+        } else {
+            #ifdef USE_PERCENT_RANGE_1D
+            printf("     SEARCH_PERCENT_FAST_LOW_1D = %.2f\n", SEARCH_PERCENT_FAST_LOW_1D);
+            printf("     SEARCH_PERCENT_SLOW_LOW_1D = %.2f\n", SEARCH_PERCENT_SLOW_LOW_1D);
+            printf("     (and 8 more parameters...)\n");
+            #endif
+        }
+        printf("\n");
+        printf("   Suggestions:\n");
+        printf("   • Reduce search percentages (e.g., from 0.06 to 0.03)\n");
+        printf("   • Focus on fewer parameters (set some to 0.00)\n");
+        printf("   • Use smaller default parameter values\n");
+        printf("\n");
+        
+        // Cleanup and exit
+        free(closes);
+        free(highs);
+        free(lows);
+        free(timestamps);
+        free(kernel_source);
+        return 1;
+    }
+    
+    // Generate parameter combinations (exact count)
+    printf("   Counting valid combinations (with constraints)...\n");
     
     int num_combinations = 0;
     for (int fl = config.fast_length_low_min; fl <= config.fast_length_low_max; fl++) {
@@ -675,7 +754,28 @@ int main(int argc, char** argv) {
         }
     }
     
-    printf("   Total combinations: %d\n\n", num_combinations);
+    printf("   Total valid combinations: %d\n", num_combinations);
+    
+    // Final safety check with actual count
+    if (num_combinations > MAX_COMBINATIONS) {
+        printf("\n");
+        printf("❌ ERROR: Too many parameter combinations!\n");
+        printf("   Valid combinations: %d\n", num_combinations);
+        printf("   Safety limit: %d (15 million)\n", MAX_COMBINATIONS);
+        printf("\n");
+        printf("💡 Reduce search ranges in: strategies/%s/config_%s.h\n", STRATEGY_NAME, interval);
+        printf("\n");
+        
+        // Cleanup and exit
+        free(closes);
+        free(highs);
+        free(lows);
+        free(timestamps);
+        free(kernel_source);
+        return 1;
+    }
+    
+    printf("   ✅ Parameter space is within limits\n\n");
     
     // Initialize OpenCL
     cl_int err;

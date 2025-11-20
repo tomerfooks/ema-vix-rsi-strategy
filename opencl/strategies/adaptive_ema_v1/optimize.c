@@ -217,6 +217,7 @@ void export_results_to_json(const char* ticker, const char* interval, const char
     fprintf(json_file, "    \"total_return\": %.2f,\n", best_results[0]);
     fprintf(json_file, "    \"max_drawdown\": %.2f,\n", best_results[1]);
     fprintf(json_file, "    \"calmar_ratio\": %.2f,\n", best_results[0] / best_results[1]);
+    fprintf(json_file, "    \"sharpe_ratio\": %.2f,\n", best_results[4]);
     fprintf(json_file, "    \"total_trades\": %d,\n", (int)best_results[2]);  // Fixed: was [3], should be [2]
     fprintf(json_file, "    \"buy_hold_return\": %.2f,\n", buy_hold_return);
     fprintf(json_file, "    \"outperformance\": %.2f\n", best_results[0] - buy_hold_return);
@@ -403,6 +404,7 @@ void generate_html_report(const char* json_filename, const char* ticker,
     fprintf(html_file, "        { label: 'Total Return', value: data.performance.total_return, suffix: '%%', colorClass: data.performance.total_return > 0 ? 'positive' : 'negative' },\n");
     fprintf(html_file, "        { label: 'Max Drawdown', value: data.performance.max_drawdown, suffix: '%%', colorClass: 'negative' },\n");
     fprintf(html_file, "        { label: 'Calmar Ratio', value: data.performance.calmar_ratio, suffix: '', colorClass: 'neutral' },\n");
+    fprintf(html_file, "        { label: 'Sharpe Ratio', value: data.performance.sharpe_ratio, suffix: '', colorClass: 'neutral' },\n");
     fprintf(html_file, "        { label: 'Total Trades', value: data.performance.total_trades, suffix: '', colorClass: 'neutral' },\n");
     fprintf(html_file, "        { label: 'Buy & Hold', value: data.performance.buy_hold_return, suffix: '%%', colorClass: data.performance.buy_hold_return > 0 ? 'positive' : 'negative' },\n");
     fprintf(html_file, "        { label: 'Outperformance', value: data.performance.outperformance, suffix: '%%', colorClass: data.performance.outperformance > 0 ? 'positive' : 'negative' }\n");
@@ -637,8 +639,88 @@ int main(int argc, char** argv) {
     printf("   Candles: %d | Auto-detecting GPU...\n", num_candles);
     printf("============================================================\n\n");
     
-    // Generate parameter combinations
-    printf("⚡ Generating parameter combinations...\n");
+    // Calculate total combinations (fast approximation first)
+    printf("⚡ Calculating parameter space size...\n");
+    
+    // Calculate ranges for each parameter
+    int fl_range = config.fast_length_low_max - config.fast_length_low_min + 1;
+    int sl_range = config.slow_length_low_max - config.slow_length_low_min + 1;
+    int fm_range = config.fast_length_med_max - config.fast_length_med_min + 1;
+    int sm_range = config.slow_length_med_max - config.slow_length_med_min + 1;
+    int fh_range = config.fast_length_high_max - config.fast_length_high_min + 1;
+    int sh_range = config.slow_length_high_max - config.slow_length_high_min + 1;
+    int atr_range = config.atr_length_max - config.atr_length_min + 1;
+    int vol_range = config.volatility_length_max - config.volatility_length_min + 1;
+    int lp_range = config.low_vol_percentile_max - config.low_vol_percentile_min + 1;
+    int hp_range = config.high_vol_percentile_max - config.high_vol_percentile_min + 1;
+    
+    printf("   Parameter ranges:\n");
+    printf("     Fast Low: %d-%d (%d values)\n", config.fast_length_low_min, config.fast_length_low_max, fl_range);
+    printf("     Slow Low: %d-%d (%d values)\n", config.slow_length_low_min, config.slow_length_low_max, sl_range);
+    printf("     Fast Med: %d-%d (%d values)\n", config.fast_length_med_min, config.fast_length_med_max, fm_range);
+    printf("     Slow Med: %d-%d (%d values)\n", config.slow_length_med_min, config.slow_length_med_max, sm_range);
+    printf("     Fast High: %d-%d (%d values)\n", config.fast_length_high_min, config.fast_length_high_max, fh_range);
+    printf("     Slow High: %d-%d (%d values)\n", config.slow_length_high_min, config.slow_length_high_max, sh_range);
+    printf("     ATR Length: %d-%d (%d values)\n", config.atr_length_min, config.atr_length_max, atr_range);
+    printf("     Vol Length: %d-%d (%d values)\n", config.volatility_length_min, config.volatility_length_max, vol_range);
+    printf("     Low Vol %%: %d-%d (%d values)\n", config.low_vol_percentile_min, config.low_vol_percentile_max, lp_range);
+    printf("     High Vol %%: %d-%d (%d values)\n", config.high_vol_percentile_min, config.high_vol_percentile_max, hp_range);
+    
+    // Upper bound estimate (ignoring constraints)
+    long long max_possible = (long long)fl_range * sl_range * fm_range * sm_range * 
+                             fh_range * sh_range * atr_range * vol_range * lp_range * hp_range;
+    
+    printf("\n   Maximum possible combinations (ignoring constraints): %lld\n", max_possible);
+    
+    #define MAX_COMBINATIONS 15000000
+    
+    if (max_possible > MAX_COMBINATIONS) {
+        printf("\n");
+        printf("❌ ERROR: Parameter space is too large!\n");
+        printf("   Maximum combinations: %lld\n", max_possible);
+        printf("   Safety limit: %d (15 million)\n", MAX_COMBINATIONS);
+        printf("\n");
+        printf("💡 To fix this, reduce the search ranges in your config file:\n");
+        printf("   File: strategies/%s/config_%s.h\n", STRATEGY_NAME, interval);
+        printf("\n");
+        printf("   Current search percentages:\n");
+        if (strcmp(interval, "1h") == 0) {
+            #ifdef USE_PERCENT_RANGE_1H
+            printf("     SEARCH_PERCENT_FAST_LOW_1H = %.2f\n", SEARCH_PERCENT_FAST_LOW_1H);
+            printf("     SEARCH_PERCENT_SLOW_LOW_1H = %.2f\n", SEARCH_PERCENT_SLOW_LOW_1H);
+            printf("     (and 8 more parameters...)\n");
+            #endif
+        } else if (strcmp(interval, "4h") == 0) {
+            #ifdef USE_PERCENT_RANGE_4H
+            printf("     SEARCH_PERCENT_FAST_LOW_4H = %.2f\n", SEARCH_PERCENT_FAST_LOW_4H);
+            printf("     SEARCH_PERCENT_SLOW_LOW_4H = %.2f\n", SEARCH_PERCENT_SLOW_LOW_4H);
+            printf("     (and 8 more parameters...)\n");
+            #endif
+        } else {
+            #ifdef USE_PERCENT_RANGE_1D
+            printf("     SEARCH_PERCENT_FAST_LOW_1D = %.2f\n", SEARCH_PERCENT_FAST_LOW_1D);
+            printf("     SEARCH_PERCENT_SLOW_LOW_1D = %.2f\n", SEARCH_PERCENT_SLOW_LOW_1D);
+            printf("     (and 8 more parameters...)\n");
+            #endif
+        }
+        printf("\n");
+        printf("   Suggestions:\n");
+        printf("   • Reduce search percentages (e.g., from 0.06 to 0.03)\n");
+        printf("   • Focus on fewer parameters (set some to 0.00)\n");
+        printf("   • Use smaller default parameter values\n");
+        printf("\n");
+        
+        // Cleanup and exit
+        free(closes);
+        free(highs);
+        free(lows);
+        free(timestamps);
+        free(kernel_source);
+        return 1;
+    }
+    
+    // Generate parameter combinations (exact count)
+    printf("   Counting valid combinations (with constraints)...\n");
     
     int num_combinations = 0;
     for (int fl = config.fast_length_low_min; fl <= config.fast_length_low_max; fl++) {
@@ -667,7 +749,28 @@ int main(int argc, char** argv) {
         }
     }
     
-    printf("   Total combinations: %d\n\n", num_combinations);
+    printf("   Total valid combinations: %d\n", num_combinations);
+    
+    // Final safety check with actual count
+    if (num_combinations > MAX_COMBINATIONS) {
+        printf("\n");
+        printf("❌ ERROR: Too many parameter combinations!\n");
+        printf("   Valid combinations: %d\n", num_combinations);
+        printf("   Safety limit: %d (15 million)\n", MAX_COMBINATIONS);
+        printf("\n");
+        printf("💡 Reduce search ranges in: strategies/%s/config_%s.h\n", STRATEGY_NAME, interval);
+        printf("\n");
+        
+        // Cleanup and exit
+        free(closes);
+        free(highs);
+        free(lows);
+        free(timestamps);
+        free(kernel_source);
+        return 1;
+    }
+    
+    printf("   ✅ Parameter space is within limits\n\n");
     
     // Initialize OpenCL
     cl_int err;
@@ -763,11 +866,11 @@ int main(int argc, char** argv) {
         }
     }
     
-    float* h_results = malloc(num_combinations * 5 * sizeof(float));
+    float* h_results = malloc(num_combinations * 6 * sizeof(float));
     float* h_trade_log = calloc(300, sizeof(float)); // Max 100 trades * 3 floats
     
     // Initialize results to invalid state
-    for (int i = 0; i < num_combinations * 5; i++) {
+    for (int i = 0; i < num_combinations * 6; i++) {
         h_results[i] = 0.0f;
     }
     
@@ -781,7 +884,7 @@ int main(int argc, char** argv) {
     cl_mem d_params = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                      num_combinations * 10 * sizeof(float), h_params, &err);
     cl_mem d_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-                                      num_combinations * 5 * sizeof(float), NULL, &err);
+                                      num_combinations * 6 * sizeof(float), NULL, &err);
     cl_mem d_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                         300 * sizeof(float), NULL, &err);
     
@@ -828,7 +931,7 @@ int main(int argc, char** argv) {
     
     // Read results
     clEnqueueReadBuffer(queue, d_results, CL_TRUE, 0, 
-                        num_combinations * 5 * sizeof(float), h_results, 0, NULL, NULL);
+                        num_combinations * 6 * sizeof(float), h_results, 0, NULL, NULL);
     clEnqueueReadBuffer(queue, d_trade_log, CL_TRUE, 0,
                         300 * sizeof(float), h_trade_log, 0, NULL, NULL);
     
@@ -838,10 +941,10 @@ int main(int argc, char** argv) {
     int valid_count = 0;
     
     for (int i = 0; i < num_combinations; i++) {
-        if (h_results[i * 5 + 4] > 0.5f) {
+        if (h_results[i * 6 + 5] > 0.5f) {
             valid_count++;
-            if (h_results[i * 5 + 3] > best_score) {
-                best_score = h_results[i * 5 + 3];
+            if (h_results[i * 6 + 3] > best_score) {
+                best_score = h_results[i * 6 + 3];
                 best_idx = i;
             }
         }
@@ -859,11 +962,12 @@ int main(int argc, char** argv) {
     if (best_idx >= 0) {
         printf("🏆 BEST PARAMETERS FOR %s\n\n", ticker);
         printf("📊 Performance Metrics:\n");
-        printf("   Total Return: %.2f%%\n", h_results[best_idx * 5 + 0]);
-        printf("   Max Drawdown: %.2f%%\n", h_results[best_idx * 5 + 1]);
-        printf("   Calmar Ratio: %.2f\n", h_results[best_idx * 5 + 0] / h_results[best_idx * 5 + 1]);
-        printf("   Total Trades: %.0f\n", h_results[best_idx * 5 + 2]);
-        printf("   Score: %.2f\n\n", h_results[best_idx * 5 + 3]);
+        printf("   Total Return: %.2f%%\n", h_results[best_idx * 6 + 0]);
+        printf("   Max Drawdown: %.2f%%\n", h_results[best_idx * 6 + 1]);
+        printf("   Calmar Ratio: %.2f\n", h_results[best_idx * 6 + 0] / h_results[best_idx * 6 + 1]);
+        printf("   Sharpe Ratio: %.2f\n", h_results[best_idx * 6 + 4]);
+        printf("   Total Trades: %.0f\n", h_results[best_idx * 6 + 2]);
+        printf("   Score: %.2f\n\n", h_results[best_idx * 6 + 3]);
         
         printf("⚙️  Optimal Parameters:\n");
         printf("   Low Vol:  Fast=%.0f, Slow=%.0f\n", 
@@ -880,7 +984,7 @@ int main(int argc, char** argv) {
     
     // Calculate Buy & Hold
     float buy_hold_return = ((closes[num_candles - 1] - closes[0]) / closes[0]) * 100.0f;
-    float strategy_outperformance = h_results[best_idx * 5 + 0] - buy_hold_return;
+    float strategy_outperformance = h_results[best_idx * 6 + 0] - buy_hold_return;
     
     printf("\n============================================================\n");
     printf("📈 PERFORMANCE COMPARISON\n");
@@ -913,7 +1017,7 @@ int main(int argc, char** argv) {
         cl_mem d_best_params = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                               10 * sizeof(float), best_params_only, &err);
         cl_mem d_best_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-                                               5 * sizeof(float), NULL, &err);
+                                               6 * sizeof(float), NULL, &err);
         cl_mem d_best_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                                  300 * sizeof(float), NULL, &err);
         
@@ -930,15 +1034,15 @@ int main(int argc, char** argv) {
         clFinish(queue);
         
         // Read the correct trade log AND results
-        float rerun_results[5];
+        float rerun_results[6];
         clEnqueueReadBuffer(queue, d_best_results, CL_TRUE, 0,
-                           5 * sizeof(float), rerun_results, 0, NULL, NULL);
+                           6 * sizeof(float), rerun_results, 0, NULL, NULL);
         clEnqueueReadBuffer(queue, d_best_trade_log, CL_TRUE, 0,
                            300 * sizeof(float), h_trade_log, 0, NULL, NULL);
         
         // Update the best results with the re-run values (they should match, but use re-run for consistency)
-        for (int i = 0; i < 5; i++) {
-            h_results[best_idx * 5 + i] = rerun_results[i];
+        for (int i = 0; i < 6; i++) {
+            h_results[best_idx * 6 + i] = rerun_results[i];
         }
         
         printf("   ✓ Trade log updated: %.0f round-trip trades\n\n", rerun_results[2]);

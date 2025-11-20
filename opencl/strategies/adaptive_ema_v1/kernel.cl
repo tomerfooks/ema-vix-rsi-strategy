@@ -36,7 +36,7 @@ __kernel void optimize_strategy(
     
     // Validate parameter constraints
     if (fast_low >= slow_low || fast_med >= slow_med || fast_high >= slow_high || low_pct >= high_pct) {
-        results[idx * 5 + 4] = 0.0f;  // Mark as invalid
+        results[idx * 6 + 5] = 0.0f;  // Mark as invalid
         return;
     }
     
@@ -64,6 +64,14 @@ __kernel void optimize_strategy(
     float max_drawdown = 0.0f;
     int trades = 0;              // Count of round-trip trades (buy+sell pair)
     int signals = 0;             // Count of individual signals (for logging)
+    
+    // For Sharpe ratio calculation
+    float trade_returns[100];    // Store returns for each completed trade
+    int num_trade_returns = 0;
+    
+    // Previous EMA values for crossover detection
+    float prev_ema_fast = 0.0f;
+    float prev_ema_slow = 0.0f;
     
     // Backtest loop
     for (int i = vol_length + 1; i < num_candles; i++) {
@@ -110,8 +118,8 @@ __kernel void optimize_strategy(
             ema_slow = alpha_slow * closes[k] + (1.0f - alpha_slow) * ema_slow;
         }
         
-        // Entry signal: Fast EMA crosses above Slow EMA
-        if (position == 0.0f && ema_fast > ema_slow && i > 50) {
+        // Entry signal: Fast EMA crosses above Slow EMA (actual crossover, not just being above)
+        if (position == 0.0f && i > vol_length + 1 && prev_ema_fast <= prev_ema_slow && ema_fast > ema_slow) {
             position = capital / closes[i];
             capital = 0.0f;
             
@@ -123,9 +131,19 @@ __kernel void optimize_strategy(
             }
             signals++;
         }
-        // Exit signal: Fast EMA crosses below Slow EMA
-        else if (position > 0.0f && ema_fast < ema_slow) {
-            capital = position * closes[i];
+        // Exit signal: Fast EMA crosses below Slow EMA (actual crossover)
+        else if (position > 0.0f && prev_ema_fast >= prev_ema_slow && ema_fast < ema_slow) {
+            float exit_value = position * closes[i];
+            float entry_value = 10000.0f * (num_trade_returns == 0 ? 1.0f : (1.0f + trade_returns[num_trade_returns - 1] / 100.0f));
+            if (num_trade_returns == 0) entry_value = 10000.0f;
+            float trade_return = (exit_value - entry_value) / entry_value * 100.0f;
+            
+            // Store trade return for Sharpe calculation
+            if (num_trade_returns < 100) {
+                trade_returns[num_trade_returns++] = trade_return;
+            }
+            
+            capital = exit_value;
             
             // Log trade only if this is a single-parameter backtest
             if (should_log && signals < 100) {
@@ -137,6 +155,10 @@ __kernel void optimize_strategy(
             signals++;
             trades++;  // Count completed round-trip trade
         }
+        
+        // Store current EMAs for next iteration's crossover detection
+        prev_ema_fast = ema_fast;
+        prev_ema_slow = ema_slow;
         
         // Track drawdown
         float current_value = capital + position * closes[i];
@@ -153,17 +175,41 @@ __kernel void optimize_strategy(
     // Calculate performance metrics
     float total_return = (capital - 10000.0f) / 10000.0f * 100.0f;
     
+    // Calculate Sharpe ratio (assuming risk-free rate = 0)
+    float sharpe_ratio = 0.0f;
+    if (num_trade_returns > 1) {
+        // Calculate mean return
+        float mean_return = 0.0f;
+        for (int i = 0; i < num_trade_returns; i++) {
+            mean_return += trade_returns[i];
+        }
+        mean_return /= num_trade_returns;
+        
+        // Calculate standard deviation of returns
+        float variance = 0.0f;
+        for (int i = 0; i < num_trade_returns; i++) {
+            float diff = trade_returns[i] - mean_return;
+            variance += diff * diff;
+        }
+        variance /= num_trade_returns;
+        float std_dev = sqrt(variance);
+        
+        // Sharpe ratio = mean return / std dev (annualized approximation)
+        sharpe_ratio = (std_dev > 0.0f) ? (mean_return / std_dev) : 0.0f;
+    }
+    
     // Filter invalid results (relaxed for short datasets)
     if (trades < 1 || max_drawdown > 50.0f || !isfinite(total_return)) {
-        results[idx * 5 + 4] = 0.0f;
+        results[idx * 6 + 5] = 0.0f;
     } else {
         float calmar = max_drawdown > 0 ? total_return / max_drawdown : 0.0f;
         
         // Store results
-        results[idx * 5 + 0] = total_return;
-        results[idx * 5 + 1] = max_drawdown;
-        results[idx * 5 + 2] = (float)trades;
-        results[idx * 5 + 3] = calmar * 10.0f;  // Score
-        results[idx * 5 + 4] = 1.0f;            // Valid flag
+        results[idx * 6 + 0] = total_return;
+        results[idx * 6 + 1] = max_drawdown;
+        results[idx * 6 + 2] = (float)trades;
+        results[idx * 6 + 3] = calmar * 10.0f;  // Score
+        results[idx * 6 + 4] = sharpe_ratio;
+        results[idx * 6 + 5] = 1.0f;            // Valid flag
     }
 }

@@ -910,9 +910,15 @@ cat data/qqq_1h.csv
 
 ## 🐛 Troubleshooting
 
-**"No data returned"**: Check ticker symbol and internet  
-**"Too many combinations"**: Reduce `percent` in optimize.c  
-**"Compilation failed"**: Check OpenCL availability  
+**"No data returned"**: Check ticker symbol and internet connection
+
+**"Parameter space is too large"**: The optimizer detected that your configuration would generate more than 15 million combinations. See [SAFETY_LIMIT.md](SAFETY_LIMIT.md) for detailed solutions:
+- Reduce search percentages (e.g., from 0.06 to 0.03)
+- Focus on fewer parameters (set some to 0.00)
+- Use smaller default parameter values
+
+**"Compilation failed"**: Check OpenCL availability
+
 **Slow performance**: Reduce candles or search range  
 
 ---

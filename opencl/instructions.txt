@@ -3,6 +3,7 @@ How to test and optimize a given symbol-interval-strategy
 Step 1:
 ./run.sh symbol interval strategy
 #for exampel: ./run.sh qqq 1d adaptive_ema_v1 nosave
+*its important to run with 'nosave' flag, to prevent saving results for each iteration. only remove the nosave flag when you're done optimizng. 
 
 Step 2: go over resulsts:
 ###
@@ -62,11 +63,11 @@ Step 3: tweak/modify base default params, based on recommendation (relevant conf
 you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization.
 Also, always GO OVER THE TRADES LIST, AND PAY ATTENTION TO THE BIG LOSERS TRADES. JUST TO FIGURE OUT WHAT HAPPENED AND MANUALLY CHANGE DEFAULT PARAMETERS.
 please also pay attention to the BASE values (commented out) in each config (1h/4h/1d) so you will have a reffernec point, if you went too far from those values - consider tuning.
-Step 4: Run again
 
-Step 5: repeat the process atleast 10 times, until very good results. if you cant generate good results, get creative and change the default params significantly (not essentialy the search ranges params in that case)
+Step 4: repeat the process at least 10 times, until very good results (significantly Outperformancing buy and hold). if you cant generate good results, get creative and change the default params significantly (not essentialy the search ranges params in that case)
 
-
+Step 5: Finally, when you are satisfied with the results, run one last time, without the nosave flag - in order to save the results.
+*if asked, generate a tradingview pinescript strategy based on the best parameters (save it also in the correct folder, along with the html/json) - strategies/adaptive_ema_v1/results/[symbol]/[interval] so i can manually test it in tradingview. 
 ___ Notes ___
 - You might get an error if the search range params is too wide, causing too many combinations: 
 #./run.sh: line 154:  3831 Segmentation fault: 11  ./optimize "$TICKER" "$INTERVAL" $NOSAVE_FLAG

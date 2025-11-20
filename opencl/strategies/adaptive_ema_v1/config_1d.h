@@ -36,16 +36,16 @@
 #define USE_PERCENT_RANGE_1D
 
 // Individual search percentages for each parameter
-#define SEARCH_PERCENT_FAST_LOW_1D 0.15     // ±15% from FAST_LOW_1D
-#define SEARCH_PERCENT_SLOW_LOW_1D 0.15     // ±15% from SLOW_LOW_1D
-#define SEARCH_PERCENT_FAST_MED_1D 0.15     // ±15% from FAST_MED_1D
-#define SEARCH_PERCENT_SLOW_MED_1D 0.15     // ±15% from SLOW_MED_1D
-#define SEARCH_PERCENT_FAST_HIGH_1D 0.15    // ±15% from FAST_HIGH_1D
-#define SEARCH_PERCENT_SLOW_HIGH_1D 0.15    // ±15% from SLOW_HIGH_1D
-#define SEARCH_PERCENT_ATR_1D 0.15          // ±15% from ATR_LENGTH_1D
-#define SEARCH_PERCENT_VOL_1D 0.15          // ±15% from VOL_LENGTH_1D
-#define SEARCH_PERCENT_LOW_PCT_1D 0.15      // ±15% from LOW_VOL_PCT_1D
-#define SEARCH_PERCENT_HIGH_PCT_1D 0.15     // ±15% from HIGH_VOL_PCT_1D
+#define SEARCH_PERCENT_FAST_LOW_1D 0.1     // ±15% from FAST_LOW_1D
+#define SEARCH_PERCENT_SLOW_LOW_1D 0.1     // ±15% from SLOW_LOW_1D
+#define SEARCH_PERCENT_FAST_MED_1D 0.1     // ±15% from FAST_MED_1D
+#define SEARCH_PERCENT_SLOW_MED_1D 0.1     // ±15% from SLOW_MED_1D
+#define SEARCH_PERCENT_FAST_HIGH_1D 0.1    // ±15% from FAST_HIGH_1D
+#define SEARCH_PERCENT_SLOW_HIGH_1D 0.1    // ±15% from SLOW_HIGH_1D
+#define SEARCH_PERCENT_ATR_1D 0.1     // ±15% from ATR_LENGTH_1D
+#define SEARCH_PERCENT_VOL_1D 0.1          // ±15% from VOL_LENGTH_1D
+#define SEARCH_PERCENT_LOW_PCT_1D 0.1      // ±15% from LOW_VOL_PCT_1D
+#define SEARCH_PERCENT_HIGH_PCT_1D 0.1     // ±15% from HIGH_VOL_PCT_1D
 
 // Strategy Settings
 #define INITIAL_CAPITAL_1D 10000.0f
