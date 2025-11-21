@@ -1,0 +1,566 @@
+{
+  "ticker": "NVDA",
+  "interval": "1h",
+  "strategy": "adaptive_ema_v2.2",
+  "timestamp": "20251121_142739",
+  "candles": 1450,
+  "performance": {
+    "total_return": 27.74,
+    "max_drawdown": 21.52,
+    "calmar_ratio": 1.29,
+    "sharpe_ratio": 0.19,
+    "total_trades": 36,
+    "buy_hold_return": 51.09,
+    "outperformance": -23.35
+  },
+  "parameters": {
+    "fast_base": 8,
+    "slow_base": 13,
+    "fast_multiplier": 1.70,
+    "slow_multiplier": 1.09,
+    "atr_length": 9,
+    "volatility_threshold": 61
+  },
+  "trades": [
+    {
+      "trade_number": 1,
+      "action": "BUY",
+      "price": 134.55,
+      "date": "2025-02-13 16:30:00",
+      "candle_index": 89
+    },
+    {
+      "trade_number": 2,
+      "action": "SELL",
+      "price": 138.99,
+      "date": "2025-02-21 18:30:00",
+      "candle_index": 126,
+      "pnl_percent": 3.30
+    },
+    {
+      "trade_number": 3,
+      "action": "BUY",
+      "price": 114.65,
+      "date": "2025-03-12 15:30:00",
+      "candle_index": 215
+    },
+    {
+      "trade_number": 4,
+      "action": "SELL",
+      "price": 116.75,
+      "date": "2025-03-18 16:30:00",
+      "candle_index": 244,
+      "pnl_percent": 1.84
+    },
+    {
+      "trade_number": 5,
+      "action": "BUY",
+      "price": 118.25,
+      "date": "2025-03-19 20:30:00",
+      "candle_index": 255
+    },
+    {
+      "trade_number": 6,
+      "action": "SELL",
+      "price": 116.47,
+      "date": "2025-03-21 15:30:00",
+      "candle_index": 264,
+      "pnl_percent": -1.51
+    },
+    {
+      "trade_number": 7,
+      "action": "BUY",
+      "price": 120.48,
+      "date": "2025-03-24 15:30:00",
+      "candle_index": 271
+    },
+    {
+      "trade_number": 8,
+      "action": "SELL",
+      "price": 115.11,
+      "date": "2025-03-26 15:30:00",
+      "candle_index": 285,
+      "pnl_percent": -4.45
+    },
+    {
+      "trade_number": 9,
+      "action": "BUY",
+      "price": 110.15,
+      "date": "2025-04-01 22:30:00",
+      "candle_index": 319
+    },
+    {
+      "trade_number": 10,
+      "action": "SELL",
+      "price": 109.00,
+      "date": "2025-04-02 16:30:00",
+      "candle_index": 320,
+      "pnl_percent": -1.05
+    },
+    {
+      "trade_number": 11,
+      "action": "BUY",
+      "price": 111.15,
+      "date": "2025-04-02 18:30:00",
+      "candle_index": 322
+    },
+    {
+      "trade_number": 12,
+      "action": "SELL",
+      "price": 105.15,
+      "date": "2025-04-03 16:30:00",
+      "candle_index": 327,
+      "pnl_percent": -5.40
+    },
+    {
+      "trade_number": 13,
+      "action": "BUY",
+      "price": 101.58,
+      "date": "2025-04-08 18:30:00",
+      "candle_index": 350
+    },
+    {
+      "trade_number": 14,
+      "action": "SELL",
+      "price": 96.32,
+      "date": "2025-04-08 21:30:00",
+      "candle_index": 353,
+      "pnl_percent": -5.18
+    },
+    {
+      "trade_number": 15,
+      "action": "BUY",
+      "price": 106.47,
+      "date": "2025-04-09 19:30:00",
+      "candle_index": 358
+    },
+    {
+      "trade_number": 16,
+      "action": "SELL",
+      "price": 105.52,
+      "date": "2025-04-16 16:30:00",
+      "candle_index": 390,
+      "pnl_percent": -0.89
+    },
+    {
+      "trade_number": 17,
+      "action": "BUY",
+      "price": 103.14,
+      "date": "2025-04-23 17:30:00",
+      "candle_index": 419
+    },
+    {
+      "trade_number": 18,
+      "action": "SELL",
+      "price": 106.06,
+      "date": "2025-04-30 18:30:00",
+      "candle_index": 455,
+      "pnl_percent": 2.83
+    },
+    {
+      "trade_number": 19,
+      "action": "BUY",
+      "price": 113.33,
+      "date": "2025-05-01 16:30:00",
+      "candle_index": 460
+    },
+    {
+      "trade_number": 20,
+      "action": "SELL",
+      "price": 113.02,
+      "date": "2025-05-06 18:30:00",
+      "candle_index": 483,
+      "pnl_percent": -0.28
+    },
+    {
+      "trade_number": 21,
+      "action": "BUY",
+      "price": 114.23,
+      "date": "2025-05-06 21:30:00",
+      "candle_index": 486
+    },
+    {
+      "trade_number": 22,
+      "action": "SELL",
+      "price": 113.29,
+      "date": "2025-05-07 17:30:00",
+      "candle_index": 489,
+      "pnl_percent": -0.82
+    },
+    {
+      "trade_number": 23,
+      "action": "BUY",
+      "price": 113.68,
+      "date": "2025-05-07 18:30:00",
+      "candle_index": 490
+    },
+    {
+      "trade_number": 24,
+      "action": "SELL",
+      "price": 113.00,
+      "date": "2025-05-07 20:30:00",
+      "candle_index": 492,
+      "pnl_percent": -0.60
+    },
+    {
+      "trade_number": 25,
+      "action": "BUY",
+      "price": 117.02,
+      "date": "2025-05-07 22:30:00",
+      "candle_index": 494
+    },
+    {
+      "trade_number": 26,
+      "action": "SELL",
+      "price": 133.77,
+      "date": "2025-05-20 17:30:00",
+      "candle_index": 552,
+      "pnl_percent": 14.32
+    },
+    {
+      "trade_number": 27,
+      "action": "BUY",
+      "price": 135.88,
+      "date": "2025-05-21 17:30:00",
+      "candle_index": 559
+    },
+    {
+      "trade_number": 28,
+      "action": "SELL",
+      "price": 132.85,
+      "date": "2025-05-21 20:30:00",
+      "candle_index": 562,
+      "pnl_percent": -2.23
+    },
+    {
+      "trade_number": 29,
+      "action": "BUY",
+      "price": 135.21,
+      "date": "2025-05-27 17:30:00",
+      "candle_index": 580
+    },
+    {
+      "trade_number": 30,
+      "action": "SELL",
+      "price": 134.46,
+      "date": "2025-05-30 19:30:00",
+      "candle_index": 603,
+      "pnl_percent": -0.55
+    },
+    {
+      "trade_number": 31,
+      "action": "BUY",
+      "price": 137.57,
+      "date": "2025-06-02 19:30:00",
+      "candle_index": 610
+    },
+    {
+      "trade_number": 32,
+      "action": "SELL",
+      "price": 142.84,
+      "date": "2025-06-11 22:30:00",
+      "candle_index": 662,
+      "pnl_percent": 3.83
+    },
+    {
+      "trade_number": 33,
+      "action": "BUY",
+      "price": 144.07,
+      "date": "2025-06-12 16:30:00",
+      "candle_index": 663
+    },
+    {
+      "trade_number": 34,
+      "action": "SELL",
+      "price": 143.07,
+      "date": "2025-06-13 18:30:00",
+      "candle_index": 672,
+      "pnl_percent": -0.69
+    },
+    {
+      "trade_number": 35,
+      "action": "BUY",
+      "price": 145.47,
+      "date": "2025-06-16 17:30:00",
+      "candle_index": 678
+    },
+    {
+      "trade_number": 36,
+      "action": "SELL",
+      "price": 143.96,
+      "date": "2025-06-20 18:30:00",
+      "candle_index": 700,
+      "pnl_percent": -1.04
+    },
+    {
+      "trade_number": 37,
+      "action": "BUY",
+      "price": 147.02,
+      "date": "2025-06-24 16:30:00",
+      "candle_index": 712
+    },
+    {
+      "trade_number": 38,
+      "action": "SELL",
+      "price": 153.40,
+      "date": "2025-07-01 18:30:00",
+      "candle_index": 749,
+      "pnl_percent": 4.34
+    },
+    {
+      "trade_number": 39,
+      "action": "BUY",
+      "price": 157.09,
+      "date": "2025-07-02 18:30:00",
+      "candle_index": 756
+    },
+    {
+      "trade_number": 40,
+      "action": "SELL",
+      "price": 171.46,
+      "date": "2025-07-21 22:30:00",
+      "candle_index": 840,
+      "pnl_percent": 9.15
+    },
+    {
+      "trade_number": 41,
+      "action": "BUY",
+      "price": 170.71,
+      "date": "2025-07-23 21:30:00",
+      "candle_index": 853
+    },
+    {
+      "trade_number": 42,
+      "action": "SELL",
+      "price": 174.78,
+      "date": "2025-08-01 17:30:00",
+      "candle_index": 898,
+      "pnl_percent": 2.38
+    },
+    {
+      "trade_number": 43,
+      "action": "BUY",
+      "price": 179.03,
+      "date": "2025-08-04 19:30:00",
+      "candle_index": 907
+    },
+    {
+      "trade_number": 44,
+      "action": "SELL",
+      "price": 180.13,
+      "date": "2025-08-13 17:30:00",
+      "candle_index": 954,
+      "pnl_percent": 0.62
+    },
+    {
+      "trade_number": 45,
+      "action": "BUY",
+      "price": 181.96,
+      "date": "2025-08-14 21:30:00",
+      "candle_index": 965
+    },
+    {
+      "trade_number": 46,
+      "action": "SELL",
+      "price": 179.92,
+      "date": "2025-08-15 16:30:00",
+      "candle_index": 967,
+      "pnl_percent": -1.12
+    },
+    {
+      "trade_number": 47,
+      "action": "BUY",
+      "price": 181.15,
+      "date": "2025-08-18 17:30:00",
+      "candle_index": 975
+    },
+    {
+      "trade_number": 48,
+      "action": "SELL",
+      "price": 178.66,
+      "date": "2025-08-19 16:30:00",
+      "candle_index": 981,
+      "pnl_percent": -1.37
+    },
+    {
+      "trade_number": 49,
+      "action": "BUY",
+      "price": 178.29,
+      "date": "2025-08-22 19:30:00",
+      "candle_index": 1005
+    },
+    {
+      "trade_number": 50,
+      "action": "SELL",
+      "price": 179.69,
+      "date": "2025-08-28 18:30:00",
+      "candle_index": 1032,
+      "pnl_percent": 0.78
+    },
+    {
+      "trade_number": 51,
+      "action": "BUY",
+      "price": 170.16,
+      "date": "2025-09-08 18:30:00",
+      "candle_index": 1074
+    },
+    {
+      "trade_number": 52,
+      "action": "SELL",
+      "price": 168.08,
+      "date": "2025-09-09 16:30:00",
+      "candle_index": 1079,
+      "pnl_percent": -1.23
+    },
+    {
+      "trade_number": 53,
+      "action": "BUY",
+      "price": 170.24,
+      "date": "2025-09-09 21:30:00",
+      "candle_index": 1084
+    },
+    {
+      "trade_number": 54,
+      "action": "SELL",
+      "price": 176.14,
+      "date": "2025-09-16 17:30:00",
+      "candle_index": 1115,
+      "pnl_percent": 3.47
+    },
+    {
+      "trade_number": 55,
+      "action": "BUY",
+      "price": 176.62,
+      "date": "2025-09-18 19:30:00",
+      "candle_index": 1131
+    },
+    {
+      "trade_number": 56,
+      "action": "SELL",
+      "price": 178.35,
+      "date": "2025-09-24 17:30:00",
+      "candle_index": 1157,
+      "pnl_percent": 0.98
+    },
+    {
+      "trade_number": 57,
+      "action": "BUY",
+      "price": 178.19,
+      "date": "2025-09-26 22:30:00",
+      "candle_index": 1176
+    },
+    {
+      "trade_number": 58,
+      "action": "SELL",
+      "price": 187.62,
+      "date": "2025-10-03 22:30:00",
+      "candle_index": 1211,
+      "pnl_percent": 5.29
+    },
+    {
+      "trade_number": 59,
+      "action": "BUY",
+      "price": 185.50,
+      "date": "2025-10-06 16:30:00",
+      "candle_index": 1212
+    },
+    {
+      "trade_number": 60,
+      "action": "SELL",
+      "price": 185.97,
+      "date": "2025-10-06 17:30:00",
+      "candle_index": 1213,
+      "pnl_percent": 0.25
+    },
+    {
+      "trade_number": 61,
+      "action": "BUY",
+      "price": 188.27,
+      "date": "2025-10-08 17:30:00",
+      "candle_index": 1227
+    },
+    {
+      "trade_number": 62,
+      "action": "SELL",
+      "price": 186.40,
+      "date": "2025-10-10 21:30:00",
+      "candle_index": 1245,
+      "pnl_percent": -0.99
+    },
+    {
+      "trade_number": 63,
+      "action": "BUY",
+      "price": 182.36,
+      "date": "2025-10-17 19:30:00",
+      "candle_index": 1278
+    },
+    {
+      "trade_number": 64,
+      "action": "SELL",
+      "price": 180.18,
+      "date": "2025-10-21 16:30:00",
+      "candle_index": 1289,
+      "pnl_percent": -1.19
+    },
+    {
+      "trade_number": 65,
+      "action": "BUY",
+      "price": 181.82,
+      "date": "2025-10-23 18:30:00",
+      "candle_index": 1305
+    },
+    {
+      "trade_number": 66,
+      "action": "SELL",
+      "price": 200.98,
+      "date": "2025-11-04 18:30:00",
+      "candle_index": 1361,
+      "pnl_percent": 10.54
+    },
+    {
+      "trade_number": 67,
+      "action": "BUY",
+      "price": 196.71,
+      "date": "2025-11-10 19:30:00",
+      "candle_index": 1390
+    },
+    {
+      "trade_number": 68,
+      "action": "SELL",
+      "price": 192.05,
+      "date": "2025-11-12 18:30:00",
+      "candle_index": 1403,
+      "pnl_percent": -2.37
+    },
+    {
+      "trade_number": 69,
+      "action": "BUY",
+      "price": 190.28,
+      "date": "2025-11-14 22:30:00",
+      "candle_index": 1421
+    },
+    {
+      "trade_number": 70,
+      "action": "SELL",
+      "price": 187.55,
+      "date": "2025-11-17 16:30:00",
+      "candle_index": 1422,
+      "pnl_percent": -1.43
+    },
+    {
+      "trade_number": 71,
+      "action": "BUY",
+      "price": 186.69,
+      "date": "2025-11-19 22:30:00",
+      "candle_index": 1442
+    },
+    {
+      "trade_number": 72,
+      "action": "SELL",
+      "price": 182.72,
+      "date": "2025-11-20 20:30:00",
+      "candle_index": 1447,
+      "pnl_percent": -2.13
+    }
+  ]
+}

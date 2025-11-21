@@ -1,0 +1,90 @@
+{
+  "ticker": "QQQ",
+  "interval": "1h",
+  "strategy": "adaptive_ema_v1",
+  "timestamp": "20251121_060547",
+  "candles": 1250,
+  "performance": {
+    "total_return": 6.00,
+    "max_drawdown": 44.22,
+    "calmar_ratio": 0.14,
+    "sharpe_ratio": 21.25,
+    "total_trades": 0,
+    "buy_hold_return": 19.06,
+    "outperformance": -13.06
+  },
+  "parameters": {
+    "fast_low": 9,
+    "slow_low": 79,
+    "fast_med": 21,
+    "slow_med": 100,
+    "fast_high": 37,
+    "slow_high": 121,
+    "atr_length": 10,
+    "volatility_length": 65,
+    "low_vol_percentile": 19,
+    "high_vol_percentile": 69
+  },
+  "trades": [
+    {
+      "trade_number": 1,
+      "action": "BUY",
+      "price": 462.98,
+      "date": "2025-04-24 17:30:00",
+      "candle_index": 226
+    },
+    {
+      "trade_number": 2,
+      "action": "SELL",
+      "price": 560.19,
+      "date": "2025-08-05 22:30:00",
+      "candle_index": 717,
+      "pnl_percent": 21.00
+    },
+    {
+      "trade_number": 3,
+      "action": "BUY",
+      "price": 571.22,
+      "date": "2025-08-22 18:30:00",
+      "candle_index": 804
+    },
+    {
+      "trade_number": 4,
+      "action": "SELL",
+      "price": 562.81,
+      "date": "2025-09-02 19:30:00",
+      "candle_index": 847,
+      "pnl_percent": -1.47
+    },
+    {
+      "trade_number": 5,
+      "action": "BUY",
+      "price": 575.26,
+      "date": "2025-09-04 22:30:00",
+      "candle_index": 864
+    },
+    {
+      "trade_number": 6,
+      "action": "SELL",
+      "price": 613.57,
+      "date": "2025-11-06 17:30:00",
+      "candle_index": 1174,
+      "pnl_percent": 6.66
+    },
+    {
+      "trade_number": 7,
+      "action": "BUY",
+      "price": 621.45,
+      "date": "2025-11-11 19:30:00",
+      "candle_index": 1197
+    },
+    {
+      "trade_number": 8,
+      "action": "SELL",
+      "price": 615.31,
+      "date": "2025-11-13 16:30:00",
+      "candle_index": 1208,
+      "pnl_percent": -0.99
+    }
+  ]
+}

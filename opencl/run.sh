@@ -113,7 +113,14 @@ echo ""
 echo -e "${YELLOW}📥 Step 1/3: Fetching market data...${NC}"
 echo ""
 
-if python3 fetch_data.py "$TICKER" "$INTERVAL" "$CANDLES"; then
+# Use virtual environment if it exists, otherwise fall back to python3
+if [ -f "../.venv/bin/python" ]; then
+    PYTHON_CMD="../.venv/bin/python"
+else
+    PYTHON_CMD="python3"
+fi
+
+if $PYTHON_CMD fetch_data.py "$TICKER" "$INTERVAL" "$CANDLES"; then
     echo ""
     echo -e "${GREEN}✅ Data fetched successfully${NC}"
 else

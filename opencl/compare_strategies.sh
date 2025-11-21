@@ -4,10 +4,10 @@
 
 set -e
 
-TICKER="QQQ"
+TICKER="NVDA"
 INTERVAL="1h"
-STRATEGIES=("adaptive_ema_v1" "adaptive_ema_v2" "adaptive_ema_v4" "ema_simple_v1")
-CANDLE_COUNTS=(300 600 1100 1400 1700 2000 2500)
+STRATEGIES=( "adaptive_ema_v2" "adaptive_ema_v2.1" "adaptive_ema_v2.2" "adaptive_ema_v4")
+CANDLE_COUNTS=(300 500 600 800 1100 1400 1700 2000 2250 2500)
 
 # Colors for output
 RED='\033[0;31m'
@@ -59,7 +59,7 @@ for STRATEGY in "${STRATEGIES[@]}"; do
         
         # Fetch data with specific candle count
         echo -e "  ${BLUE}→${NC} Fetching data..."
-        if ! python3 fetch_data.py "$TICKER" "$INTERVAL" "$CANDLES" > /dev/null 2>&1; then
+        if ! ../.venv/bin/python fetch_data.py "$TICKER" "$INTERVAL" "$CANDLES" > /dev/null 2>&1; then
             echo -e "  ${RED}✗ Failed to fetch data${NC}"
             echo "${STRATEGY},${CANDLES},ERROR,,,,,," >> "$CSV_FILE"
             continue
@@ -121,7 +121,7 @@ echo ""
 
 # Generate summary report
 echo -e "${YELLOW}Generating summary report...${NC}"
-python3 - <<EOF
+../.venv/bin/python - <<EOF
 import csv
 import sys
 

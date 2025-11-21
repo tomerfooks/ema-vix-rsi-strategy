@@ -1,0 +1,4 @@
+How to compare and optimize all strategies:
+1. read the instuctions.txt and learn about how to optimize a specific strategy. eventually, set the base params (config_1h) to the default values. change the ranges (from 0 to 0.1/0.2/0.3) of each param in order to let the system try many combinations to find the best ones. 
+2. once you optimized a specific strategy, make sure to set the range params to 0% range - so we can actually compare the strategies in the next steps.
+3. use ./compare-strategies to run all strategies one after the other on multiple candles time ranges.

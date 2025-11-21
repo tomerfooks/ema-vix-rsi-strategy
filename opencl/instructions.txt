@@ -5,9 +5,9 @@ Step 1:
 #for exampel: ./run.sh qqq 1d adaptive_ema_v1 nosave
 *its important to run with 'nosave' flag, to prevent saving results for each iteration. only remove the nosave flag when you're done optimizng. 
 before starting, go over the proper interval config (config_1h/4h/1d) and reset the params to the BASE default params (commented out) to make sure you start from a nuetral position.
-
-
-Step 2: go over resulsts:
+if asked, you can run use different candles quantity like this, for example: ./run.sh qqq 1d adaptive_ema_v2.1 1200 nosave
+ITS IMPORTANT TO TEST A STRATEGY ON 300, 500, 1000, 1500, 1800, 2200, 2500 CANDLES to make sure the params suits most date ranges.
+Step 2: go over results:
 ###
 will look like this: 
    Total combinations: 73728

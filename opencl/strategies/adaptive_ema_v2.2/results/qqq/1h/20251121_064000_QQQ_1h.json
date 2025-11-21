@@ -1,0 +1,27 @@
+{
+  "ticker": "QQQ",
+  "interval": "1h",
+  "strategy": "adaptive_ema_v2.2",
+  "timestamp": "20251121_064000",
+  "candles": 1750,
+  "performance": {
+    "total_return": 22.47,
+    "max_drawdown": 3.68,
+    "calmar_ratio": 6.10,
+    "sharpe_ratio": 0.36,
+    "total_trades": 27,
+    "buy_hold_return": 16.79,
+    "outperformance": 5.68
+  },
+  "parameters": {
+    "fast_base": 1,
+    "slow_base": 1,
+    "fast_multiplier": 7.00,
+    "slow_multiplier": 67.00,
+    "atr_length": 10,
+    "volatility_threshold": 63
+  },
+  "trades": [
+
+  ]
+}
