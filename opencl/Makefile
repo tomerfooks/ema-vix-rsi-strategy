@@ -16,6 +16,9 @@ STRATEGY_DIR = strategies/adaptive_ema_v4
 else ifeq ($(STRATEGY),adaptive_ema_v3)
 SRC = strategies/adaptive_ema_v3/optimize.c
 STRATEGY_DIR = strategies/adaptive_ema_v3
+else ifeq ($(STRATEGY),adaptive_ema_v2.1)
+SRC = strategies/adaptive_ema_v2.1/optimize.c
+STRATEGY_DIR = strategies/adaptive_ema_v2.1
 else ifeq ($(STRATEGY),adaptive_ema_v2)
 SRC = strategies/adaptive_ema_v2/optimize.c
 STRATEGY_DIR = strategies/adaptive_ema_v2
