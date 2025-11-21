@@ -1,0 +1,2 @@
+Strategy,Candles,Total_Return,Max_Drawdown,Calmar_Ratio,Total_Trades,Score,Buy_Hold_Return,Outperformance
+adaptive_ema_v2,300,6.29,10.28,0.61,7,6.12,1.78,4.51

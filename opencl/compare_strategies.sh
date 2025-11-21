@@ -4,9 +4,9 @@
 
 set -e
 
-TICKER="NVDA"
+TICKER="qqq"
 INTERVAL="1h"
-STRATEGIES=( "adaptive_ema_v2" "adaptive_ema_v2.1" "adaptive_ema_v2.2" "adaptive_ema_v4")
+STRATEGIES=( "adaptive_ema_v1" "adaptive_ema_v2" "adaptive_ema_v2.1" "adaptive_ema_v2.2" "adaptive_ema_v4")
 CANDLE_COUNTS=(300 500 600 800 1100 1400 1700 2000 2250 2500)
 
 # Colors for output

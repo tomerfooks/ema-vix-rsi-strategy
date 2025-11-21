@@ -14,19 +14,19 @@
 
 // Default parameter values for 1H interval
 //FAST_BASE_1H = 8
-#define FAST_BASE_1H 8
+#define FAST_BASE_1H 9
 //SLOW_BASE_1H = 13
-#define SLOW_BASE_1H 13
+#define SLOW_BASE_1H 11
 //FAST_MULT_1H = 1.6
-#define FAST_MULT_1H 1.7
+#define FAST_MULT_1H 1.4
 //SLOW_MULT_1H = 1
 #define SLOW_MULT_1H 1.09
 //ATR_LENGTH_1H = 12
 #define ATR_LENGTH_1H 12
 //VOL_THRESHOLD_1H = 63
-#define VOL_THRESHOLD_1H 63
+#define VOL_THRESHOLD_1H 65
 //RSI_LENGTH_1H = 14
-#define RSI_LENGTH_1H 14
+#define RSI_LENGTH_1H 7
 //RSI_THRESHOLD_1H = 70
 #define RSI_THRESHOLD_1H 67
 
