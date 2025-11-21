@@ -1,0 +1,13 @@
+# Cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.vscode/
+.idea/
+
+# Keep data and results folders but ignore contents
+data/*
+!data/.gitkeep
+results/*
+!results/.gitkeep

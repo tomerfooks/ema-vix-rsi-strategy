@@ -1,0 +1,43 @@
+{
+  "trading": {
+    "initial_capital": 10000,
+    "commission": {
+      "model": "fixed",
+      "fee_per_trade": 1.0
+    },
+    "slippage": {
+      "model": "percent",
+      "percent": 0.001
+    }
+  },
+  "data": {
+    "provider": "yfinance",
+    "resolution": "1h",
+    "start_date": "2023-01-01",
+    "end_date": "2024-12-31"
+  },
+  "quantconnect": {
+    "api_url": "https://www.quantconnect.com/api/v2",
+    "user_id": "",
+    "api_token": "",
+    "project_id": ""
+  },
+  "strategies": {
+    "adaptive_ema_v2": {
+      "enabled": true,
+      "parameters": {
+        "fast_base": 15,
+        "slow_base": 18,
+        "fast_mult": 2.0,
+        "slow_mult": 1.4,
+        "atr_length": 12,
+        "vol_threshold": 65
+      }
+    }
+  },
+  "optimization": {
+    "method": "grid",
+    "parallel": true,
+    "max_workers": 4
+  }
+}

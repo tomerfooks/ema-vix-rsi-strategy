@@ -10,7 +10,7 @@
 
 // Enable percentage-based range search
 #define USE_PERCENT_RANGE_1H
-
+ 
 // Default parameter values for 1H interval
 //FAST_BASE_1H = 8
 #define FAST_BASE_1H 8

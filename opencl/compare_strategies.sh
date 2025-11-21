@@ -6,7 +6,7 @@ set -e
 
 TICKER="qqq"
 INTERVAL="1h"
-STRATEGIES=( "adaptive_ema_v1" "adaptive_ema_v2" "adaptive_ema_v2.1" "adaptive_ema_v2.2" "adaptive_ema_v4")
+STRATEGIES=( "adaptive_ema_v1" "adaptive_ema_v2" "adaptive_ema_v2.1" "adaptive_ema_v2.2" "adaptive_ema_v4" "adaptive_donchian_v1" "adaptive_ema_vol_v1")
 CANDLE_COUNTS=(300 500 600 800 1100 1400 1700 2000 2250 2500)
 
 # Colors for output
@@ -24,8 +24,8 @@ echo -e "${CYAN}   STRATEGY COMPARISON TEST${NC}"
 echo -e "${CYAN}════════════════════════════════════════════════════════${NC}"
 echo -e "   Ticker: ${GREEN}${TICKER}${NC}"
 echo -e "   Interval: ${GREEN}${INTERVAL}${NC}"
-echo -e "   Strategies: ${GREEN}${#STRATEGIES[@]}${NC} (v1, v2, v3, v4)"
-echo -e "   Candle Counts: ${GREEN}${#CANDLE_COUNTS[@]}${NC} (600, 1000, 1400, 1700, 2000, 2500)"
+echo -e "   Strategies: ${GREEN}${#STRATEGIES[@]}${NC} (EMA v1, v2, v2.1, v2.2, v4, Donchian v1, EMA Vol v1)"
+echo -e "   Candle Counts: ${GREEN}${#CANDLE_COUNTS[@]}${NC} (300-2500)"
 echo -e "${CYAN}════════════════════════════════════════════════════════${NC}"
 echo ""
 

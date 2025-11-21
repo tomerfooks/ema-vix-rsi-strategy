@@ -28,14 +28,19 @@ if [ $# -lt 2 ]; then
     echo "  TICKER    Stock ticker (e.g., GOOG, QQQ, SPY)"
     echo "  INTERVAL  Time interval: 1h, 4h, or 1d"
     echo "  STRATEGY  Strategy name (optional, defaults: adaptive_ema_v1)"
+    echo "            Available: adaptive_ema_v1, adaptive_ema_v2, adaptive_ema_v2.1,"
+    echo "                      adaptive_ema_v2.2, adaptive_ema_v4, adaptive_donchian_v1,"
+    echo "                      adaptive_ema_vol_v1"
     echo "  CANDLES   Number of candles (optional, defaults: 1h=500, 4h=270, 1d=150)"
     echo "  nosave    Skip saving JSON and HTML results"
     echo ""
     echo "Examples:"
-    echo "  $0 GOOG 1h                     # Default strategy and candles"
-    echo "  $0 QQQ 1d adaptive_ema_v1      # Specific strategy"
-    echo "  $0 SPY 4h adaptive_ema_v2 600  # Strategy with custom candles"
-    echo "  $0 QQQ 1d adaptive_ema_v1 nosave # No save results"
+    echo "  $0 GOOG 1h                           # Default strategy and candles"
+    echo "  $0 QQQ 1d adaptive_ema_v1            # Specific EMA strategy"
+    echo "  $0 QQQ 1h adaptive_donchian_v1       # Donchian breakout strategy"
+    echo "  $0 QQQ 1h adaptive_ema_vol_v1        # EMA with volume confirmation"
+    echo "  $0 SPY 4h adaptive_ema_v2 600        # Strategy with custom candles"
+    echo "  $0 QQQ 1d adaptive_ema_v1 nosave     # No save results"
     exit 1
 fi
 
