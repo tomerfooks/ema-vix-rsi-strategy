@@ -10,7 +10,13 @@ TARGET = optimize
 STRATEGY ?= adaptive_ema_v1
 
 # Strategy-specific source files
-ifeq ($(STRATEGY),adaptive_ema_v2)
+ifeq ($(STRATEGY),adaptive_ema_v4)
+SRC = strategies/adaptive_ema_v4/optimize.c
+STRATEGY_DIR = strategies/adaptive_ema_v4
+else ifeq ($(STRATEGY),adaptive_ema_v3)
+SRC = strategies/adaptive_ema_v3/optimize.c
+STRATEGY_DIR = strategies/adaptive_ema_v3
+else ifeq ($(STRATEGY),adaptive_ema_v2)
 SRC = strategies/adaptive_ema_v2/optimize.c
 STRATEGY_DIR = strategies/adaptive_ema_v2
 else ifeq ($(STRATEGY),ema_simple_v1)

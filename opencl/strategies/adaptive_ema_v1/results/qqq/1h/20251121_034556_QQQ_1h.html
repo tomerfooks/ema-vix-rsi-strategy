@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QQQ 1h - adaptive_ema_v1 Results</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0e17; color: #e4e4e7; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; margin-bottom: 10px; color: #60a5fa; }
+    h2 { font-size: 1.5rem; margin: 30px 0 15px; color: #a78bfa; border-bottom: 2px solid #374151; padding-bottom: 10px; }
+    .meta { color: #9ca3af; margin-bottom: 30px; font-size: 0.95rem; }
+    .meta span { margin-right: 20px; }
+    .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .metric-card { background: #1e293b; padding: 20px; border-radius: 8px; border-left: 4px solid #60a5fa; }
+    .metric-label { font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-value { font-size: 1.8rem; font-weight: 700; margin-top: 8px; }
+    .positive { color: #34d399; }
+    .negative { color: #f87171; }
+    .neutral { color: #60a5fa; }
+    .chart-container { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .params { background: #1e293b; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+    .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .param-item { padding: 10px; background: #0f172a; border-radius: 4px; }
+    .param-name { font-size: 0.8rem; color: #9ca3af; }
+    .param-value { font-size: 1.1rem; font-weight: 600; color: #e4e4e7; margin-top: 4px; }
+    .trades-table { width: 100%; background: #1e293b; border-radius: 8px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #0f172a; padding: 12px; text-align: left; font-weight: 600; color: #a78bfa; font-size: 0.85rem; text-transform: uppercase; }
+    td { padding: 12px; border-top: 1px solid #374151; }
+    tr:hover { background: #0f172a; }
+    .buy { color: #34d399; font-weight: 600; }
+    .sell { color: #f87171; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QQQ 1h Strategy Results</h1>
+    <div class="meta">
+      <span><strong>Strategy:</strong> adaptive_ema_v1</span>
+      <span><strong>Generated:</strong> 20251121_034556</span>
+      <span><strong>Data:</strong> <a href="../../../data/qqq_1h.csv" style="color: #60a5fa;">../../../data/qqq_1h.csv</a></span>
+    </div>
+
+    <h2>Performance Metrics</h2>
+    <div id="metrics" class="metrics"></div>
+
+    <h2>Price Chart with Trades</h2>
+    <div class="chart-container">
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <h2>Optimized Parameters</h2>
+    <div id="parameters" class="params"></div>
+
+    <h2>Trade Log</h2>
+    <div class="trades-table">
+      <table id="tradesTable"></table>
+    </div>
+  </div>
+
+  <script>
+    const embeddedData = {
+  "ticker": "QQQ",
+  "interval": "1h",
+  "strategy": "adaptive_ema_v1",
+  "timestamp": "20251121_034556",
+  "candles": 2250,
+  "performance": {
+    "total_return": 37.20,
+    "max_drawdown": 5.28,
+    "calmar_ratio": 7.04,
+    "sharpe_ratio": 1.13,
+    "total_trades": 7,
+    "buy_hold_return": 30.65,
+    "outperformance": 6.56
+  },
+  "parameters": {
+    "fast_low": 8,
+    "slow_low": 79,
+    "fast_med": 19,
+    "slow_med": 99,
+    "fast_high": 37,
+    "slow_high": 118,
+    "atr_length": 10,
+    "volatility_length": 64,
+    "low_vol_percentile": 19,
+    "high_vol_percentile": 69
+  },
+  "trades": [
+    {
+      "trade_number": 1,
+      "action": "BUY",
+      "price": 473.77,
+      "date": "2024-09-12 20:30:00",
+      "candle_index": 166
+    },
+    {
+      "trade_number": 2,
+      "action": "SELL",
+      "price": 522.57,
+      "date": "2024-12-27 22:30:00",
+      "candle_index": 678,
+      "pnl_percent": 10.30
+    },
+    {
+      "trade_number": 3,
+      "action": "BUY",
+      "price": 517.55,
+      "date": "2025-01-15 21:30:00",
+      "candle_index": 754
+    },
+    {
+      "trade_number": 4,
+      "action": "SELL",
+      "price": 517.66,
+      "date": "2025-01-29 20:30:00",
+      "candle_index": 816,
+      "pnl_percent": 0.02
+    },
+    {
+      "trade_number": 5,
+      "action": "BUY",
+      "price": 462.85,
+      "date": "2025-04-24 16:30:00",
+      "candle_index": 1225
+    },
+    {
+      "trade_number": 6,
+      "action": "SELL",
+      "price": 561.12,
+      "date": "2025-08-05 21:30:00",
+      "candle_index": 1716,
+      "pnl_percent": 21.23
+    },
+    {
+      "trade_number": 7,
+      "action": "BUY",
+      "price": 564.88,
+      "date": "2025-08-06 17:30:00",
+      "candle_index": 1719
+    },
+    {
+      "trade_number": 8,
+      "action": "SELL",
+      "price": 562.89,
+      "date": "2025-08-21 20:30:00",
+      "candle_index": 1799,
+      "pnl_percent": -0.35
+    },
+    {
+      "trade_number": 9,
+      "action": "BUY",
+      "price": 573.21,
+      "date": "2025-08-22 19:30:00",
+      "candle_index": 1805
+    },
+    {
+      "trade_number": 10,
+      "action": "SELL",
+      "price": 562.81,
+      "date": "2025-09-02 19:30:00",
+      "candle_index": 1847,
+      "pnl_percent": -1.81
+    },
+    {
+      "trade_number": 11,
+      "action": "BUY",
+      "price": 575.26,
+      "date": "2025-09-04 22:30:00",
+      "candle_index": 1864
+    },
+    {
+      "trade_number": 12,
+      "action": "SELL",
+      "price": 614.06,
+      "date": "2025-11-06 21:30:00",
+      "candle_index": 2178,
+      "pnl_percent": 6.74
+    },
+    {
+      "trade_number": 13,
+      "action": "BUY",
+      "price": 622.52,
+      "date": "2025-11-10 20:30:00",
+      "candle_index": 2191
+    },
+    {
+      "trade_number": 14,
+      "action": "SELL",
+      "price": 611.47,
+      "date": "2025-11-13 17:30:00",
+      "candle_index": 2209,
+      "pnl_percent": -1.78
+    }
+  ]
+}
+;
+    
+    async function loadResults() {
+      const data = embeddedData;
+
+      const metricsDiv = document.getElementById('metrics');
+      const metrics = [
+        { label: 'Total Return', value: data.performance.total_return, suffix: '%', colorClass: data.performance.total_return > 0 ? 'positive' : 'negative' },
+        { label: 'Max Drawdown', value: data.performance.max_drawdown, suffix: '%', colorClass: 'negative' },
+        { label: 'Calmar Ratio', value: data.performance.calmar_ratio, suffix: '', colorClass: 'neutral' },
+        { label: 'Sharpe Ratio', value: data.performance.sharpe_ratio, suffix: '', colorClass: 'neutral' },
+        { label: 'Total Trades', value: data.performance.total_trades, suffix: '', colorClass: 'neutral' },
+        { label: 'Buy & Hold', value: data.performance.buy_hold_return, suffix: '%', colorClass: data.performance.buy_hold_return > 0 ? 'positive' : 'negative' },
+        { label: 'Outperformance', value: data.performance.outperformance, suffix: '%', colorClass: data.performance.outperformance > 0 ? 'positive' : 'negative' }
+      ];
+      metricsDiv.innerHTML = metrics.map(m => `<div class="metric-card"><div class="metric-label">${m.label}</div><div class="metric-value ${m.colorClass}">${m.value.toFixed(2)}${m.suffix}</div></div>`).join('');
+
+      const paramsDiv = document.getElementById('parameters');
+      const params = Object.entries(data.parameters).map(([key, value]) => `<div class="param-item"><div class="param-name">${key.replace(/_/g, ' ')}</div><div class="param-value">${value}</div></div>`).join('');
+      paramsDiv.innerHTML = `<div class="param-grid">${params}</div>`;
+
+      const tradesTable = document.getElementById('tradesTable');
+      const tradesHTML = `<thead><tr><th>#</th><th>Action</th><th>Price</th><th>Date</th><th>P&L</th></tr></thead><tbody>${data.trades.map(t => `<tr><td>${t.trade_number}</td><td class="${t.action.toLowerCase()}">${t.action}</td><td>$${t.price.toFixed(2)}</td><td>${t.date}</td><td class="${t.pnl_percent ? (t.pnl_percent > 0 ? 'positive' : 'negative') : ''}">${t.pnl_percent ? (t.pnl_percent > 0 ? '+' : '') + t.pnl_percent.toFixed(2) + '%' : '-'}</td></tr>`).join('')}</tbody>`;
+      tradesTable.innerHTML = tradesHTML;
+
+      // Generate trade markers for the chart
+      const tradeMarkers = data.trades.map(t => ({
+        date: t.date.split(' ')[0],
+        price: t.price,
+        action: t.action
+      }));
+
+      // Create price chart using trade data
+      const ctx = document.getElementById('priceChart').getContext('2d');
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: { 
+          labels: tradeMarkers.map(t => t.date), 
+          datasets: [
+            { 
+              label: 'Trade Prices', 
+              data: tradeMarkers.map(t => t.price), 
+              borderColor: '#60a5fa', 
+              backgroundColor: 'rgba(96, 165, 250, 0.1)', 
+              borderWidth: 2, 
+              pointRadius: 4,
+              pointBackgroundColor: tradeMarkers.map(t => t.action === 'BUY' ? '#34d399' : '#f87171'),
+              pointBorderColor: tradeMarkers.map(t => t.action === 'BUY' ? '#34d399' : '#f87171'),
+              tension: 0.1 
+            }
+          ] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: true, 
+          aspectRatio: 2.5, 
+          plugins: { 
+            legend: { labels: { color: '#e4e4e7' } }, 
+            tooltip: { 
+              mode: 'index', 
+              intersect: false,
+              callbacks: {
+                label: function(context) {
+                  const trade = tradeMarkers[context.dataIndex];
+                  return `${trade.action}: $${trade.price.toFixed(2)}`;
+                }
+              }
+            } 
+          }, 
+          scales: { 
+            x: { 
+              ticks: { color: '#9ca3af', maxTicksLimit: 12 }, 
+              grid: { color: '#374151' } 
+            }, 
+            y: { 
+              ticks: { color: '#9ca3af' }, 
+              grid: { color: '#374151' } 
+            } 
+          } 
+        }
+      });
+    }
+    loadResults();
+  </script>
+</body>
+</html>
