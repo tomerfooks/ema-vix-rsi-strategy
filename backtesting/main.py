@@ -28,11 +28,12 @@ except ImportError:
                     os.environ[key.strip()] = value.strip()
 
 from strategies import (
+    AdaptiveEmaV1Strategy,
     AdaptiveEMAV2,
-    AdaptiveEMAV2_1,
-    AdaptiveEMAV2_2,
-    AdaptiveEMAVolV1,
-    AdaptiveDonchianV1
+    # AdaptiveEMAV2_1,
+    # AdaptiveEMAV2_2,
+    # AdaptiveEMAVolV1,
+    # AdaptiveDonchianV1
 )
 from utils import load_data, align_opencl_data, calculate_metrics, generate_report
 from utils.converter import convert_opencl_params
@@ -82,18 +83,20 @@ def run_backtest(
     # Initialize strategy based on name
     strategy_key = strategy_name.lower().replace('_', '').replace('.', '')
     
-    if strategy_key == 'adaptiveemav2':
+    if strategy_key == 'adaptiveemav1':
+        strategy = AdaptiveEmaV1Strategy(strategy_params)
+    elif strategy_key == 'adaptiveemav2':
         strategy = AdaptiveEMAV2(**strategy_params)
-    elif strategy_key == 'adaptiveemav21':
-        strategy = AdaptiveEMAV2_1(**strategy_params)
-    elif strategy_key == 'adaptiveemav22':
-        strategy = AdaptiveEMAV2_2(**strategy_params)
-    elif strategy_key == 'adaptiveemavolv1':
-        strategy = AdaptiveEMAVolV1(**strategy_params)
-    elif strategy_key == 'adaptivedonchianv1':
-        strategy = AdaptiveDonchianV1(**strategy_params)
+    # elif strategy_key == 'adaptiveemav21':
+    #     strategy = AdaptiveEMAV2_1(**strategy_params)
+    # elif strategy_key == 'adaptiveemav22':
+    #     strategy = AdaptiveEMAV2_2(**strategy_params)
+    # elif strategy_key == 'adaptiveemavolv1':
+    #     strategy = AdaptiveEMAVolV1(**strategy_params)
+    # elif strategy_key == 'adaptivedonchianv1':
+    #     strategy = AdaptiveDonchianV1(**strategy_params)
     else:
-        raise ValueError(f"Unknown strategy: {strategy_name}. Available: adaptive_ema_v2, adaptive_ema_v2_1, adaptive_ema_v2_2, adaptive_ema_vol_v1, adaptive_donchian_v1")
+        raise ValueError(f"Unknown strategy: {strategy_name}. Available: adaptive_ema_v1, adaptive_ema_v2")
     
     # Display strategy info
     info = strategy.get_strategy_info()
@@ -252,23 +255,43 @@ def main():
     parser.add_argument('--source', type=str, default='alpaca',
                        help='Data source: alpaca, yahoo, or auto (default: alpaca)')
     
-    # Strategy parameters (optimized defaults)
+    # Strategy parameters (v1 defaults - proven Pine Script values)
+    parser.add_argument('--fast-low', type=int, default=12,
+                       help='Fast EMA low volatility (default: 12)')
+    parser.add_argument('--slow-low', type=int, default=80,
+                       help='Slow EMA low volatility (default: 80)')
+    parser.add_argument('--fast-med', type=int, default=25,
+                       help='Fast EMA medium volatility (default: 25)')
+    parser.add_argument('--slow-med', type=int, default=108,
+                       help='Slow EMA medium volatility (default: 108)')
+    parser.add_argument('--fast-high', type=int, default=38,
+                       help='Fast EMA high volatility (default: 38)')
+    parser.add_argument('--slow-high', type=int, default=120,
+                       help='Slow EMA high volatility (default: 120)')
+    parser.add_argument('--atr-length', type=int, default=14,
+                       help='ATR period (default: 14)')
+    parser.add_argument('--vol-length', type=int, default=63,
+                       help='Volatility lookback period (default: 63)')
+    parser.add_argument('--low-pct', type=int, default=25,
+                       help='Low volatility percentile (default: 25)')
+    parser.add_argument('--high-pct', type=int, default=73,
+                       help='High volatility percentile (default: 73)')
+    
+    # V2 Strategy parameters (for backward compatibility)
     parser.add_argument('--fast-base', type=int, default=15,
-                       help='Fast EMA base period (default: 15)')
+                       help='V2: Fast EMA base period (default: 15)')
     parser.add_argument('--slow-base', type=int, default=18,
-                       help='Slow EMA base period (default: 18)')
+                       help='V2: Slow EMA base period (default: 18)')
     parser.add_argument('--fast-mult', type=float, default=2.0,
-                       help='Fast EMA multiplier (default: 2.0)')
+                       help='V2: Fast EMA multiplier (default: 2.0)')
     parser.add_argument('--slow-mult', type=float, default=1.4,
-                       help='Slow EMA multiplier (default: 1.4)')
-    parser.add_argument('--atr-length', type=int, default=12,
-                       help='ATR period (default: 12)')
+                       help='V2: Slow EMA multiplier (default: 1.4)')
     parser.add_argument('--vol-threshold', type=int, default=65,
-                       help='Volatility threshold (default: 65)')
+                       help='V2: Volatility threshold (default: 65)')
     parser.add_argument('--adx-length', type=int, default=12,
-                       help='ADX period (default: 12)')
+                       help='V2: ADX period (default: 12)')
     parser.add_argument('--adx-threshold', type=float, default=12.0,
-                       help='ADX threshold (default: 12.0)')
+                       help='V2: ADX threshold (default: 12.0)')
     
     # Modes
     parser.add_argument('--compare', action='store_true',
@@ -303,28 +326,56 @@ def main():
         print()
     
     # CLI arguments override everything
-    cli_params = {
-        'fast_base': args.fast_base,
-        'slow_base': args.slow_base,
-        'fast_mult': args.fast_mult,
-        'slow_mult': args.slow_mult,
-        'atr_length': args.atr_length,
-        'vol_threshold': args.vol_threshold,
-        'adx_length': args.adx_length,
-        'adx_threshold': args.adx_threshold,
-    }
+    # Detect which strategy to use parameter mapping
+    strategy_key = args.strategy.lower().replace('_', '').replace('.', '')
     
-    # Only use CLI params if they differ from defaults (meaning user explicitly set them)
-    parser_defaults = {
-        'fast_base': 15,
-        'slow_base': 18,
-        'fast_mult': 2.0,
-        'slow_mult': 1.4,
-        'atr_length': 12,
-        'vol_threshold': 65,
-        'adx_length': 12,
-        'adx_threshold': 12.0,
-    }
+    if strategy_key == 'adaptiveemav1':
+        cli_params = {
+            'fast_length_low': args.fast_low,
+            'slow_length_low': args.slow_low,
+            'fast_length_med': args.fast_med,
+            'slow_length_med': args.slow_med,
+            'fast_length_high': args.fast_high,
+            'slow_length_high': args.slow_high,
+            'atr_length': args.atr_length,
+            'volatility_length': args.vol_length,
+            'low_vol_percentile': args.low_pct,
+            'high_vol_percentile': args.high_pct,
+        }
+        parser_defaults = {
+            'fast_length_low': 12,
+            'slow_length_low': 80,
+            'fast_length_med': 25,
+            'slow_length_med': 108,
+            'fast_length_high': 38,
+            'slow_length_high': 120,
+            'atr_length': 14,
+            'volatility_length': 63,
+            'low_vol_percentile': 25,
+            'high_vol_percentile': 73,
+        }
+    else:
+        # V2 parameters
+        cli_params = {
+            'fast_base': args.fast_base,
+            'slow_base': args.slow_base,
+            'fast_mult': args.fast_mult,
+            'slow_mult': args.slow_mult,
+            'atr_length': args.atr_length,
+            'vol_threshold': args.vol_threshold,
+            'adx_length': args.adx_length,
+            'adx_threshold': args.adx_threshold,
+        }
+        parser_defaults = {
+            'fast_base': 15,
+            'slow_base': 18,
+            'fast_mult': 2.0,
+            'slow_mult': 1.4,
+            'atr_length': 12,
+            'vol_threshold': 65,
+            'adx_length': 12,
+            'adx_threshold': 12.0,
+        }
     
     for key, value in cli_params.items():
         # If CLI value differs from default, it was explicitly set
