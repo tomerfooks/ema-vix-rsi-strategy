@@ -1,12 +1,13 @@
-How to test and optimize a given symbol-interval-strategy
+How to test and optimize a given symbol-interval-strategy. after optmizing on a single candles set (usually 10000), we well test it on multiple.
 
 Step 1:
 ./run.sh symbol interval strategy
-#for exampel: ./run.sh qqq 1d adaptive_ema_v1 nosave
+#for example (single run): ./run.sh qqq 1d adaptive_ema_v1 10000 nosave // its important to start with 10000 candles. 
 *its important to run with 'nosave' flag, to prevent saving results for each iteration. only remove the nosave flag when you're done optimizng. 
-before starting, go over the proper interval config (config_1h/4h/1d) and reset the params to the BASE default params (commented out) to make sure you start from a nuetral position.
+before starting, go over the proper interval config (config_1h/4h/1d) and reset the params to the BASE default params (commented out) to make sure you start from a nuetral position. when trying to set search range params, its important to set very conservative values (usually 0.02-0.15)  to prevent producing too many combinations.
 if asked, you can run use different candles quantity like this, for example: ./run.sh qqq 1d adaptive_ema_v2.1 1200 nosave
-ITS IMPORTANT TO TEST A STRATEGY ON 300, 500, 1000, 1500, 1800, 2200, 2500 CANDLES to make sure the params suits most date ranges.
+after optimization for specific candles size, strategy, symbol and interval - its important to set to 0 all the ranges, so testing the winning params on multiple candles (using ./runMultiple.sh) will be faster
+
 Step 2: go over results:
 ###
 will look like this: 
@@ -62,16 +63,15 @@ will look like this:
 
 
 Step 3: tweak/modify base default params, based on recommendation (relevant config file will be located in strategies/strategy/config_1d | #for example: strategies/adaptive_ema_v1/config_1d)
-you can also change the SEARCH_PERCENT_1D param, to widen/narrow the parameter range optimization.
+you can also change the Ranges params, to widen/narrow the parameter range optimization.
 USE bigger ranges for smaller numbers (for example, fast ema's) and smaller ranges for biggern number. this will make the values in the ranges more symmetrical when optimizng. 
 Also, always GO OVER THE TRADES LIST, AND PAY ATTENTION TO THE BIG LOSERS TRADES. JUST TO FIGURE OUT WHAT HAPPENED AND MANUALLY CHANGE DEFAULT PARAMETERS.
 please also pay attention to the BASE values (commented out) in each config (1h/4h/1d) so you will have a reffernec point, if you went too far from those values - consider tuning.
 
-
 Step 4: repeat the process at least 10 times, until very good results (significantly Outperformancing buy and hold). if you cant generate good results, get creative and change the default params significantly (not essentialy the search ranges params in that case)
 
-Step 5: Finally, when you are satisfied with the results, run one last time, without the nosave flag - in order to save the results.
-*if asked, generate a tradingview pinescript strategy based on the best parameters (save it also in the correct folder, along with the html/json) - strategies/adaptive_ema_v1/results/[symbol]/[interval] so i can manually test it in tradingview. 
+Step 5: Finally, when you are satisfied with the results, run ./runMultiple, without the nosave flag - in order to save the results: #for example (multiple candles run): ./runMultiple.sh QQQ 1h adaptive_ema_v2.1 "300 500 1000 1500 2000 2500 5000 7500 10000 12500 15000" nosave
+
 ___ Notes ___
 - You might get an error if the search range params is too wide, causing too many combinations: 
 #./run.sh: line 154:  3831 Segmentation fault: 11  ./optimize "$TICKER" "$INTERVAL" $NOSAVE_FLAG

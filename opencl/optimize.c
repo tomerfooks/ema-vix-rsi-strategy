@@ -872,7 +872,7 @@ int main(int argc, char** argv) {
     }
     
     float* h_results = malloc(num_combinations * 5 * sizeof(float));
-    float* h_trade_log = calloc(300, sizeof(float)); // Max 100 trades * 3 floats
+    float* h_trade_log = calloc(1500, sizeof(float)); // Max 500 trades * 3 floats
     
     // Create GPU buffers
     cl_mem d_closes = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
@@ -886,7 +886,7 @@ int main(int argc, char** argv) {
     cl_mem d_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                       num_combinations * 5 * sizeof(float), NULL, &err);
     cl_mem d_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
-                                        300 * sizeof(float), NULL, &err);
+                                        1500 * sizeof(float), NULL, &err);
     
     // Set kernel arguments
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_closes);
@@ -933,7 +933,7 @@ int main(int argc, char** argv) {
     clEnqueueReadBuffer(queue, d_results, CL_TRUE, 0, 
                         num_combinations * 5 * sizeof(float), h_results, 0, NULL, NULL);
     clEnqueueReadBuffer(queue, d_trade_log, CL_TRUE, 0,
-                        300 * sizeof(float), h_trade_log, 0, NULL, NULL);
+                        1500 * sizeof(float), h_trade_log, 0, NULL, NULL);
     
     // Find best result
     float best_score = -INFINITY;
@@ -999,7 +999,7 @@ int main(int argc, char** argv) {
     int entry_idx = -1;
     float entry_price = 0.0f;
     
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 500; i++) {
         int candle_idx = (int)h_trade_log[i * 3 + 0];
         float price = h_trade_log[i * 3 + 1];
         int is_buy = (int)h_trade_log[i * 3 + 2];

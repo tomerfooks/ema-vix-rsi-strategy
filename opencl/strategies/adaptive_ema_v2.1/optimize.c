@@ -635,7 +635,7 @@ int main(int argc, char** argv) {
     }
     
     float* h_results = malloc(num_combinations * 6 * sizeof(float));
-    float* h_trade_log = calloc(300, sizeof(float));
+    float* h_trade_log = calloc(1500, sizeof(float));
     
     for (int i = 0; i < num_combinations * 6; i++) h_results[i] = 0.0f;
     
@@ -650,7 +650,7 @@ int main(int argc, char** argv) {
                                      num_combinations * 8 * sizeof(float), h_params, &err);
     cl_mem d_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                       num_combinations * 6 * sizeof(float), NULL, &err);
-    cl_mem d_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 300 * sizeof(float), NULL, &err);
+    cl_mem d_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 1500 * sizeof(float), NULL, &err);
     
     // Set kernel arguments
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &d_closes);
@@ -746,7 +746,7 @@ int main(int argc, char** argv) {
         cl_mem d_best_params = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                               8 * sizeof(float), best_params_only, &err);
         cl_mem d_best_results = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 6 * sizeof(float), NULL, &err);
-        cl_mem d_best_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 300 * sizeof(float), NULL, &err);
+        cl_mem d_best_trade_log = clCreateBuffer(context, CL_MEM_WRITE_ONLY, 1500 * sizeof(float), NULL, &err);
         
         int single_combo = 1;
         clSetKernelArg(kernel, 4, sizeof(cl_mem), &d_best_params);
@@ -760,7 +760,7 @@ int main(int argc, char** argv) {
         
         float rerun_results[6];
         clEnqueueReadBuffer(queue, d_best_results, CL_TRUE, 0, 6 * sizeof(float), rerun_results, 0, NULL, NULL);
-        clEnqueueReadBuffer(queue, d_best_trade_log, CL_TRUE, 0, 300 * sizeof(float), h_trade_log, 0, NULL, NULL);
+        clEnqueueReadBuffer(queue, d_best_trade_log, CL_TRUE, 0, 1500 * sizeof(float), h_trade_log, 0, NULL, NULL);
         
         for (int i = 0; i < 6; i++) h_results[best_idx * 6 + i] = rerun_results[i];
         
@@ -774,7 +774,7 @@ int main(int argc, char** argv) {
     int trade_count = 0;
     float entry_price = 0.0f;
     
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 500; i++) {
         int candle_idx = (int)h_trade_log[i * 3 + 0];
         float price = h_trade_log[i * 3 + 1];
         int is_buy = (int)h_trade_log[i * 3 + 2];

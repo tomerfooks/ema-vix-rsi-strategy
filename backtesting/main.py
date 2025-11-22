@@ -1,12 +1,31 @@
 """
-Main entry point for QuantConnect backtesting system
-Run strategies locally before deploying to QuantConnect Cloud
+Main entry point for backtesting system
+Run strategies locally with professional-grade analysis
 """
 
 import argparse
 import sys
 from datetime import datetime
 import json
+import os
+from pathlib import Path
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+except ImportError:
+    # If python-dotenv not installed, try to load .env manually
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ[key.strip()] = value.strip()
 
 from strategies import (
     AdaptiveEMAV2,
@@ -17,6 +36,7 @@ from strategies import (
 )
 from utils import load_data, align_opencl_data, calculate_metrics, generate_report
 from utils.converter import convert_opencl_params
+from utils import load_strategy_params
 
 
 def run_backtest(
@@ -26,6 +46,7 @@ def run_backtest(
     end_date: str,
     interval: str = '1h',
     use_opencl_data: bool = False,
+    data_source: str = 'auto',
     **strategy_params
 ):
     """
@@ -41,7 +62,7 @@ def run_backtest(
         **strategy_params: Strategy-specific parameters
     """
     print("=" * 70)
-    print(f"QuantConnect Backtest - {strategy_name}")
+    print(f"Backtesting System - {strategy_name}")
     print("=" * 70)
     print(f"Symbol: {symbol}")
     print(f"Period: {start_date} to {end_date}")
@@ -53,7 +74,7 @@ def run_backtest(
         print("Loading OpenCL data for comparison...")
         data = align_opencl_data(symbol, interval)
     else:
-        data = load_data(symbol, start_date, end_date, interval)
+        data = load_data(symbol, start_date, end_date, interval, source=data_source)
     
     print(f"Loaded {len(data)} bars")
     print()
@@ -216,7 +237,7 @@ def compare_to_opencl(strategy_name: str, symbol: str, interval: str, **strategy
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description='QuantConnect Backtesting System')
+    parser = argparse.ArgumentParser(description='Strategy Backtesting System')
     
     parser.add_argument('--strategy', type=str, default='adaptive_ema_v2',
                        help='Strategy name (default: adaptive_ema_v2)')
@@ -228,6 +249,8 @@ def main():
                        help='End date YYYY-MM-DD (default: 2024-12-31)')
     parser.add_argument('--interval', type=str, default='1h',
                        help='Data interval (default: 1h)')
+    parser.add_argument('--source', type=str, default='alpaca',
+                       help='Data source: alpaca, yahoo, or auto (default: alpaca)')
     
     # Strategy parameters (optimized defaults)
     parser.add_argument('--fast-base', type=int, default=15,
@@ -242,31 +265,75 @@ def main():
                        help='ATR period (default: 12)')
     parser.add_argument('--vol-threshold', type=int, default=65,
                        help='Volatility threshold (default: 65)')
+    parser.add_argument('--adx-length', type=int, default=12,
+                       help='ADX period (default: 12)')
+    parser.add_argument('--adx-threshold', type=float, default=12.0,
+                       help='ADX threshold (default: 12.0)')
     
     # Modes
     parser.add_argument('--compare', action='store_true',
                        help='Compare to OpenCL results')
     parser.add_argument('--from-opencl', type=str,
                        help='Load parameters from OpenCL config file')
+    parser.add_argument('--use-saved-params', action='store_true',
+                       help='Load parameters from saved JSON file for symbol/interval')
     
     args = parser.parse_args()
     
-    # Load parameters from OpenCL if specified
-    strategy_params = {
-        'fast_base': args.fast_base,
-        'slow_base': args.slow_base,
-        'fast_mult': args.fast_mult,
-        'slow_mult': args.slow_mult,
-        'atr_length': args.atr_length,
-        'vol_threshold': args.vol_threshold,
-    }
+    # Load parameters - priority: CLI args > saved params > defaults
+    strategy_params = {}
     
+    # First, try to load saved parameters if requested
+    if args.use_saved_params:
+        print(f"Loading saved parameters for {args.symbol}/{args.interval}...")
+        saved_params = load_strategy_params(args.strategy, args.interval, args.symbol)
+        if saved_params:
+            strategy_params.update(saved_params)
+            print(f"✓ Loaded saved parameters")
+        else:
+            print(f"⚠ No saved parameters found, using defaults")
+        print()
+    
+    # Load from OpenCL if specified (overrides saved params)
     if args.from_opencl:
         print(f"Loading parameters from: {args.from_opencl}")
         opencl_params = convert_opencl_params(args.from_opencl, args.strategy)
         strategy_params.update(opencl_params)
         print("Parameters loaded from OpenCL config")
         print()
+    
+    # CLI arguments override everything
+    cli_params = {
+        'fast_base': args.fast_base,
+        'slow_base': args.slow_base,
+        'fast_mult': args.fast_mult,
+        'slow_mult': args.slow_mult,
+        'atr_length': args.atr_length,
+        'vol_threshold': args.vol_threshold,
+        'adx_length': args.adx_length,
+        'adx_threshold': args.adx_threshold,
+    }
+    
+    # Only use CLI params if they differ from defaults (meaning user explicitly set them)
+    parser_defaults = {
+        'fast_base': 15,
+        'slow_base': 18,
+        'fast_mult': 2.0,
+        'slow_mult': 1.4,
+        'atr_length': 12,
+        'vol_threshold': 65,
+        'adx_length': 12,
+        'adx_threshold': 12.0,
+    }
+    
+    for key, value in cli_params.items():
+        # If CLI value differs from default, it was explicitly set
+        if value != parser_defaults.get(key):
+            strategy_params[key] = value
+    
+    # If no params were loaded and no CLI overrides, use parser defaults
+    if not strategy_params and not args.use_saved_params and not args.from_opencl:
+        strategy_params = cli_params
     
     # Run in appropriate mode
     if args.compare:
@@ -283,6 +350,7 @@ def main():
             start_date=args.start,
             end_date=args.end,
             interval=args.interval,
+            data_source=args.source,
             **strategy_params
         )
 

@@ -189,7 +189,7 @@ __kernel void optimize_strategy(
             capital = 0.0f;
             
             // Log trade
-            if (should_log && signals < 100) {
+            if (should_log && signals < 500) {
                 trade_log[signals * 3 + 0] = (float)i;
                 trade_log[signals * 3 + 1] = closes[i];
                 trade_log[signals * 3 + 2] = 1.0f;  // Buy
@@ -218,7 +218,7 @@ __kernel void optimize_strategy(
             capital = exit_value;
             
             // Log trade
-            if (should_log && signals < 100) {
+            if (should_log && signals < 500) {
                 trade_log[signals * 3 + 0] = (float)i;
                 trade_log[signals * 3 + 1] = closes[i];
                 trade_log[signals * 3 + 2] = 0.0f;  // Sell

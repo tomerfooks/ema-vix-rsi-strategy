@@ -245,8 +245,8 @@ if __name__ == '__main__':
     from strategies import AdaptiveEMAV2
     from utils import load_data
     
-    # Load data
-    data = load_data('QQQ', '2022-01-01', '2024-11-18', '1d')
+    # Load data - QQQ 1h for approximately 2 years
+    data = load_data('QQQ', '2023-01-01', '2024-11-21', '1h')
     
     # Define parameter grid
     param_grid = {
@@ -256,6 +256,15 @@ if __name__ == '__main__':
         'slow_mult': [1.0, 1.2, 1.4, 1.6],
         'vol_threshold': [55, 60, 65, 70, 75]
     }
+    
+    # Run grid search
+    results = grid_search(
+        AdaptiveEMAV2,
+        data,
+        param_grid,
+        metric='calmar_ratio',
+        n_jobs=4
+    )
     
     # Run grid search
     results = grid_search(

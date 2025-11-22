@@ -1,0 +1,32 @@
+{
+  "symbol": "QQQ",
+  "interval": "1d",
+  "strategy": "adaptive_ema_v2_1",
+  "parameters": {
+    "fast_base": 15,
+    "slow_base": 18,
+    "fast_mult": 2.0,
+    "slow_mult": 1.4,
+    "atr_length": 12,
+    "vol_threshold": 65,
+    "vol_length": 50,
+    "adx_length": 12,
+    "adx_threshold": 12.0
+  },
+  "performance": {
+    "total_return": 123.16,
+    "max_drawdown": -20.92,
+    "calmar_ratio": 5.89,
+    "sharpe_ratio": 0.97,
+    "win_rate": 53.85,
+    "num_trades": 65,
+    "alpha": 21.48
+  },
+  "backtest_period": {
+    "start": "2020-11-21",
+    "end": "2025-11-21",
+    "candles": 1255
+  },
+  "updated": "2025-11-21",
+  "notes": "Optimized - Alpha improved to 21.48% after testing 6 parameter variations (all worse than baseline). Parameters remain optimal."
+}

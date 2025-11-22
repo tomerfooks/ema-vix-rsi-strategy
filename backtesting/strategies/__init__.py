@@ -1,5 +1,5 @@
 """
-QuantConnect Strategy Implementations
+Strategy Implementations
 Ported from OpenCL optimization system
 
 Organized structure:

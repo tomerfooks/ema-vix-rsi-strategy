@@ -16,12 +16,6 @@
     "start_date": "2023-01-01",
     "end_date": "2024-12-31"
   },
-  "quantconnect": {
-    "api_url": "https://www.quantconnect.com/api/v2",
-    "user_id": "",
-    "api_token": "",
-    "project_id": ""
-  },
   "strategies": {
     "adaptive_ema_v2": {
       "enabled": true,
