@@ -117,11 +117,41 @@ def _save_to_cache(df: pd.DataFrame, ticker: str, interval: str, num_candles: in
 def fetch_data(ticker, interval, num_candles):
     """Fetch historical data from Alpaca and save to CSV (with 24h caching)"""
     
+    # For standard filename compatibility
+    ticker_lower = ticker.lower()
+    standard_filename = f"data/{ticker_lower}_{interval}.csv"
+    
+    # Check if standard file exists and is recent enough
+    if os.path.exists(standard_filename):
+        try:
+            df_existing = pd.read_csv(standard_filename)
+            if len(df_existing) > 0 and 'Timestamp' in df_existing.columns:
+                last_timestamp = df_existing['Timestamp'].iloc[-1]
+                last_date = pd.to_datetime(last_timestamp, unit='s')
+                yesterday = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+                
+                # Check if data is up to yesterday
+                if last_date.date() >= yesterday.date():
+                    print(f"📦 Found existing data in {standard_filename}")
+                    print(f"   {len(df_existing)} candles available")
+                    print(f"   Date range: {pd.to_datetime(df_existing['Timestamp'].iloc[0], unit='s').strftime('%Y-%m-%d')} to {last_date.strftime('%Y-%m-%d')}")
+                    
+                    # If we need fewer candles, just use what we need
+                    if len(df_existing) >= num_candles + 50:
+                        print(f"   ✅ Data is current and sufficient")
+                        return True
+                    else:
+                        print(f"   ⚠️  Data exists but only has {len(df_existing)} candles (need {num_candles + 50})")
+                else:
+                    print(f"   ⚠️  Data exists but is outdated (last: {last_date.strftime('%Y-%m-%d')})")
+        except Exception as e:
+            print(f"   ⚠️  Error reading existing file: {e}")
+    
     # Add warmup period buffer (50 candles needed for indicators)
     WARMUP_PERIOD = 50
     num_candles_with_warmup = num_candles + WARMUP_PERIOD
     
-    # Check cache first
+    # Check cache first (for timestamped files)
     cached_df, cache_file = _check_cache(ticker, interval, num_candles_with_warmup)
     if cached_df is not None:
         # Use the standard filename for compatibility with OpenCL code
@@ -153,6 +183,7 @@ def fetch_data(ticker, interval, num_candles):
     
     # Map intervals to Alpaca TimeFrame
     interval_map = {
+        '15m': (TimeFrame(15, TimeFrameUnit.Minute), num_candles_with_warmup / 96),
         '1h': (TimeFrame(1, TimeFrameUnit.Hour), num_candles_with_warmup / 24),
         '4h': (TimeFrame(4, TimeFrameUnit.Hour), num_candles_with_warmup / 6),
         '1d': (TimeFrame(1, TimeFrameUnit.Day), num_candles_with_warmup)
@@ -160,34 +191,47 @@ def fetch_data(ticker, interval, num_candles):
     
     if interval not in interval_map:
         print(f"❌ Invalid interval: {interval}")
-        print("   Valid intervals: 1h, 4h, 1d")
+        print("   Valid intervals: 15m, 1h, 4h, 1d")
         return False
     
     timeframe, days_needed = interval_map[interval]
     
-    # Calculate date range (Alpaca has data since 2016)
-    # Use generous buffer to ensure we get enough candles
-    days_needed = int(days_needed * 1.8) + 30
-    end_date = datetime.now()  # Get data up to current time
-    start_date = max(
-        end_date - timedelta(days=days_needed),
-        datetime(2016, 1, 1)  # Alpaca data starts from 2016
-    )
+    # Calculate date range
+    # For 15m data, fetch all available data from 2016 to yesterday
+    # For other intervals, use the existing logic
+    end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)  # Yesterday
     
-    print(f"📡 Fetching {ticker} data from Alpaca...")
+    if interval == '15m':
+        # For 15m, always fetch from 2016 to yesterday (all available data)
+        start_date = datetime(2016, 1, 1)
+        print(f"📡 Fetching ALL {ticker} {interval} data from Alpaca (SIP feed)...")
+    else:
+        # For other intervals, calculate based on requested candles
+        days_needed = int(days_needed * 1.8) + 30
+        start_date = max(
+            end_date - timedelta(days=days_needed),
+            datetime(2016, 1, 1)
+        )
+        print(f"📡 Fetching {ticker} data from Alpaca...")
+    
     print(f"   Interval: {interval}")
     print(f"   Requested: {num_candles} candles (+{WARMUP_PERIOD} warmup)")
     print(f"   Date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
     
     try:
-        # Initialize Alpaca client with IEX feed (free tier friendly)
+        # Initialize Alpaca client
+        # Use SIP feed for 15m data (has historical data from 2016)
+        # Use IEX feed for other intervals (free tier friendly)
+        use_sip = (interval == '15m')
+        
         client = StockHistoricalDataClient(
             ALPACA_API_KEY, 
             ALPACA_SECRET_KEY,
-            url_override="https://data.alpaca.markets"  # Use IEX data feed for free tier
+            url_override="https://data.alpaca.markets"
         )
         
-        # Create request (use IEX feed for free tier)
+        # Create request
+        feed_type = 'sip' if use_sip else 'iex'
         request_params = StockBarsRequest(
             symbol_or_symbols=ticker,
             timeframe=timeframe,
@@ -195,51 +239,96 @@ def fetch_data(ticker, interval, num_candles):
             end=end_date,
             limit=10000,  # Maximum allowed on free tier
             adjustment='split',
-            feed='iex'  # Use IEX feed instead of SIP (free tier compatible)
+            feed=feed_type
         )
         
-        # Fetch data
-        bars = client.get_stock_bars(request_params)
+        # Fetch data (may need multiple requests for 15m data)
+        all_dfs = []
+        current_start = start_date
         
-        if ticker not in bars.data or len(bars.df) == 0:
+        while current_start < end_date:
+            request_params = StockBarsRequest(
+                symbol_or_symbols=ticker,
+                timeframe=timeframe,
+                start=current_start,
+                end=end_date,
+                limit=10000,
+                adjustment='split',
+                feed=feed_type
+            )
+            
+            bars = client.get_stock_bars(request_params)
+            
+            if ticker not in bars.data or len(bars.df) == 0:
+                if len(all_dfs) == 0:
+                    print(f"❌ No data returned for {ticker}")
+                    return False
+                else:
+                    # We got some data in previous chunks, break
+                    break
+            
+            # Convert to DataFrame
+            df_chunk = bars.df
+            
+            # Alpaca returns MultiIndex DataFrame, flatten it
+            if isinstance(df_chunk.index, pd.MultiIndex):
+                df_chunk = df_chunk.reset_index()
+                if 'symbol' in df_chunk.columns:
+                    df_chunk = df_chunk[df_chunk['symbol'] == ticker].drop('symbol', axis=1)
+            else:
+                df_chunk = df_chunk.reset_index()
+            
+            # Standardize column names
+            df_chunk.columns = [c.lower() for c in df_chunk.columns]
+            
+            # Rename timestamp column
+            if 'timestamp' not in df_chunk.columns:
+                for col in ['datetime', 'date', 'index']:
+                    if col in df_chunk.columns:
+                        df_chunk = df_chunk.rename(columns={col: 'timestamp'})
+                        break
+            
+            # Ensure timestamp is datetime
+            df_chunk['timestamp'] = pd.to_datetime(df_chunk['timestamp'])
+            if df_chunk['timestamp'].dt.tz is not None:
+                df_chunk['timestamp'] = df_chunk['timestamp'].dt.tz_localize(None)
+            
+            all_dfs.append(df_chunk)
+            
+            # Check if we got less than the limit (means we got all data)
+            if len(df_chunk) < 10000:
+                break
+            
+            # Update start date for next chunk (add 1 second to avoid duplicates)
+            current_start = df_chunk['timestamp'].iloc[-1] + timedelta(seconds=1)
+            print(f"   Fetched {len(df_chunk)} bars, continuing from {current_start.strftime('%Y-%m-%d')}...")
+        
+        # Combine all chunks
+        if len(all_dfs) == 0:
             print(f"❌ No data returned for {ticker}")
             return False
         
-        # Convert to DataFrame
-        df = bars.df
+        df = pd.concat(all_dfs, ignore_index=True)
         
-        # Alpaca returns MultiIndex DataFrame, flatten it
-        if isinstance(df.index, pd.MultiIndex):
-            df = df.reset_index()
-            if 'symbol' in df.columns:
-                df = df[df['symbol'] == ticker].drop('symbol', axis=1)
-        else:
-            df = df.reset_index()
+        # Remove duplicates based on timestamp
+        df = df.drop_duplicates(subset=['timestamp'], keep='first')
         
-        # Standardize column names
-        df.columns = [c.lower() for c in df.columns]
-        
-        # Rename timestamp column
-        if 'timestamp' not in df.columns:
-            for col in ['datetime', 'date', 'index']:
-                if col in df.columns:
-                    df = df.rename(columns={col: 'timestamp'})
-                    break
-        
-        # Ensure timestamp is datetime
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        if df['timestamp'].dt.tz is not None:
-            df['timestamp'] = df['timestamp'].dt.tz_localize(None)
+        # Sort by timestamp
+        df = df.sort_values('timestamp')
         
         # Set timestamp as index
         df = df.set_index('timestamp')
         
-        # Limit to requested number of candles (including warmup)
-        df = df.tail(num_candles_with_warmup)
+        # For non-15m intervals, limit to requested number of candles (including warmup)
+        # For 15m, keep all data
+        if interval != '15m':
+            df = df.tail(num_candles_with_warmup)
         
-        # Warn if we got fewer candles than requested
-        if len(df) < num_candles_with_warmup:
+        # Warn if we got fewer candles than requested (only for non-15m)
+        if interval != '15m' and len(df) < num_candles_with_warmup:
             print(f"   ⚠️  Only {len(df)} candles available")
+        
+        print(f"   ✅ Retrieved {len(df)} total bars")
         
         # Prepare data for CSV
         df['Timestamp'] = df.index.astype(int) // 10**9  # Convert to Unix timestamp
@@ -258,17 +347,17 @@ def fetch_data(ticker, interval, num_candles):
         # Create data directory if it doesn't exist
         os.makedirs('data', exist_ok=True)
         
-        # Save to cache with timestamped filename
-        cache_filepath = _save_to_cache(df, ticker, interval, num_candles_with_warmup)
+        # Save to cache with timestamped filename (only if not 15m with all data)
+        if interval != '15m':
+            cache_filepath = _save_to_cache(df, ticker, interval, num_candles_with_warmup)
+            print(f"   📦 Cached as {cache_filepath}")
         
-        # Also save to standard filename for OpenCL compatibility
+        # Always save to standard filename for OpenCL compatibility
         ticker_lower = ticker.lower()
         filename = f"data/{ticker_lower}_{interval}.csv"
-        if cache_filepath != filename:
-            df.to_csv(filename, index=False, header=True)
+        df.to_csv(filename, index=False, header=True)
         
         print(f"   ✅ Saved {len(df)} candles to {filename}")
-        print(f"   📦 Cached as {cache_filepath}")
         print(f"   Date range: {df.index[0].strftime('%Y-%m-%d')} to {df.index[-1].strftime('%Y-%m-%d')}")
         
         return True
